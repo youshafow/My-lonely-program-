@@ -6,6 +6,11 @@ import 'story_interaction_overlay.dart';
 import 'story_transition_placeholder.dart';
 
 const dayTwoShadowForestEndAt = Duration(seconds: 10);
+const dayTwoPlaybackSpeed = 0.65;
+
+Duration dayTwoMediaPosition(Duration screenTime) => Duration(
+  microseconds: (screenTime.inMicroseconds * dayTwoPlaybackSpeed).round(),
+);
 
 class DayTwoVideoBackground extends StatefulWidget {
   const DayTwoVideoBackground({
@@ -75,7 +80,7 @@ class _DayTwoVideoBackgroundState extends State<DayTwoVideoBackground> {
     try {
       await _controller.initialize();
       await _controller.setLooping(false);
-      await _controller.setPlaybackSpeed(0.65);
+      await _controller.setPlaybackSpeed(dayTwoPlaybackSpeed);
       await _controller.setVolume(widget.phase == 1 ? 0 : 1);
       if (widget.phase == 1) widget.onWhispersStart();
       await _controller.play();
@@ -106,14 +111,15 @@ class _DayTwoVideoBackgroundState extends State<DayTwoVideoBackground> {
     final scene = widget.scene;
     if (widget.phase == 1 &&
         !_whispersEnded &&
-        value.position >= dayTwoShadowForestEndAt) {
+        value.position >= dayTwoMediaPosition(dayTwoShadowForestEndAt)) {
       _whispersEnded = true;
       unawaited(_controller.setVolume(1));
       widget.onWhispersEnd();
     }
     if (scene != null &&
         !_checkpointSent &&
-        (value.position >= scene.triggerAt || value.isCompleted)) {
+        (value.position >= dayTwoMediaPosition(scene.triggerAt) ||
+            value.isCompleted)) {
       _checkpointSent = true;
       unawaited(_controller.pause());
       setState(() => _waitingForDecision = true);
@@ -148,7 +154,9 @@ class _DayTwoVideoBackgroundState extends State<DayTwoVideoBackground> {
 
     try {
       await _controller.seekTo(
-        scene.retryFrom ?? Duration(seconds: (widget.phase - 1) * 10),
+        dayTwoMediaPosition(
+          scene.retryFrom ?? Duration(seconds: (widget.phase - 1) * 10),
+        ),
       );
       await _controller.play();
     } catch (error) {

@@ -12,6 +12,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:video_player/video_player.dart';
 import 'package:shadow_shat/burning_card_with_real_fire.dart';
+import 'package:shadow_shat/day2.dart';
 import 'package:shadow_shat/day3.dart';
 import 'package:shadow_shat/day4.dart';
 import 'package:shadow_shat/ha_interaction.dart' as ha;
@@ -86,6 +87,11 @@ void main() {
     expect(dayTwoStoryScenes[2].triggerAt, const Duration(seconds: 28));
     expect(dayTwoStoryScenes[1].statusAr, 'الظل يصعد السلم الحجري أمامك');
     expect(dayTwoStoryScenes[1].actionAr, 'اصعد السلم خلف الظل 🪜');
+    expect(dayTwoPlaybackSpeed, 0.65);
+    expect(
+      dayTwoMediaPosition(dayTwoStoryScenes[1].triggerAt),
+      const Duration(seconds: 14, milliseconds: 300),
+    );
     expect(storyScenes[3].statusAr, ha.syncedStoryCues[3].statusAr);
     expect(storyScenes[3].actionAr, ha.syncedStoryCues[3].actionAr);
     expect(storyScenes[4].statusAr, ha.syncedStoryCues[4].statusAr);
@@ -101,6 +107,36 @@ void main() {
     expect(dayThreeFloorCollapseScene.qteSeconds, 3);
     expect(dayThreeFloorCollapseScene.statusAr, 'الأرض تنهار تحتك!');
     expect(dayThreeFloorCollapseScene.actionAr, 'احمِ نفسك فوراً! ⚠️');
+  });
+
+  testWidgets('Day 2 stairs interaction appears and action is tappable', (
+    WidgetTester tester,
+  ) async {
+    var actionPressed = false;
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: Stack(
+            fit: StackFit.expand,
+            children: [
+              const ColoredBox(color: Colors.black),
+              InteractiveStoryOverlay(
+                scene: dayTwoStoryScenes[1],
+                showInteraction: true,
+                onActionPressed: () => actionPressed = true,
+                onQteFailed: () {},
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+
+    expect(find.text('الظل يصعد السلم الحجري أمامك'), findsOneWidget);
+    expect(find.text('اصعد السلم خلف الظل 🪜'), findsOneWidget);
+    await tester.tap(find.text('اصعد السلم خلف الظل 🪜'));
+    await tester.pump();
+    expect(actionPressed, isTrue);
   });
 
   testWidgets('Story action is delivered from the interaction overlay', (
