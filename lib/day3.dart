@@ -14,7 +14,7 @@ const dayThreePlaybackSpeed = 0.65;
 const dayThreePhaseTwoCompletionAt = Duration(seconds: 10);
 
 Duration dayThreeMediaPosition(Duration screenTime) => Duration(
-  microseconds: (screenTime.inMicroseconds / dayThreePlaybackSpeed).round(),
+  microseconds: (screenTime.inMicroseconds * dayThreePlaybackSpeed).round(),
 );
 
 const dayThreeCandleQuestion = 'أين أنا؟';

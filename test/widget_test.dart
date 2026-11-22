@@ -212,7 +212,7 @@ void main() {
     expect(dayThreePhaseTwoCompletionAt, const Duration(seconds: 10));
     expect(
       dayThreeMediaPosition(const Duration(seconds: 6)),
-      const Duration(seconds: 9, milliseconds: 230),
+      const Duration(seconds: 3, milliseconds: 900),
     );
     expect(dayThreeCandleQuestion, 'أين أنا؟');
     expect(dayThreeCandleStatus, 'المكان مظلم تماماً.. وهناك شمعة بجانبك');
