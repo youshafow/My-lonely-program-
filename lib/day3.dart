@@ -9,7 +9,14 @@ import 'story_transition_placeholder.dart';
 
 const int dayThreeStartingPhase = 1;
 const dayThreeCandleInteractionAt = Duration(seconds: 6);
-const dayThreeFlashlightInteractionAt = Duration(milliseconds: 4500);
+const dayThreeFlashlightInteractionAt = Duration(seconds: 8);
+const dayThreePlaybackSpeed = 0.65;
+const dayThreePhaseTwoCompletionAt = Duration(seconds: 10);
+
+Duration dayThreeMediaPosition(Duration screenTime) => Duration(
+  microseconds: (screenTime.inMicroseconds / dayThreePlaybackSpeed).round(),
+);
+
 const dayThreeCandleQuestion = 'أين أنا؟';
 const dayThreeCandleStatus = 'المكان مظلم تماماً.. وهناك شمعة بجانبك';
 const dayThreeCandleAction = 'إشعال الشمعة بعود الثقاب 🔥';
@@ -178,7 +185,9 @@ class _DayThreeVideoBackgroundState extends State<StorySequencePlayer> {
       _controller = controller;
       controller!.addListener(_checkProgress);
       await controller.setLooping(false);
-      await controller.setPlaybackSpeed(phase == 10 ? 1.0 : 0.65);
+      await controller.setPlaybackSpeed(
+        phase == 10 ? 1.0 : dayThreePlaybackSpeed,
+      );
       await controller.setVolume(1);
       await controller.play();
       if (mounted && activation == _activation) setState(() {});
@@ -257,11 +266,15 @@ class _DayThreeVideoBackgroundState extends State<StorySequencePlayer> {
           ? dayThreeCandleInteractionAt
           : dayThreeFlashlightInteractionAt;
       if (_phaseTwoInteractionStep < 2 &&
-          (value.position >= nextInteractionAt || value.isCompleted) &&
+          (value.position >= dayThreeMediaPosition(nextInteractionAt) ||
+              value.isCompleted) &&
           !_showActionOverlay) {
         _pauseForAction();
       } else if (_phaseTwoInteractionStep == 2 &&
-          (position >= 10000 || value.isCompleted)) {
+          (position >=
+                  dayThreeMediaPosition(dayThreePhaseTwoCompletionAt)
+                      .inMilliseconds ||
+              value.isCompleted)) {
         unawaited(controller.pause());
         _completeVideo();
       }

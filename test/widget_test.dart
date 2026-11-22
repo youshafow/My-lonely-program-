@@ -207,7 +207,13 @@ void main() {
   test('Day 3 video order and live scene context match the story', () async {
     expect(dayThreeStartingPhase, 1);
     expect(dayThreeCandleInteractionAt, const Duration(seconds: 6));
-    expect(dayThreeFlashlightInteractionAt, const Duration(milliseconds: 4500));
+    expect(dayThreeFlashlightInteractionAt, const Duration(seconds: 8));
+    expect(dayThreePlaybackSpeed, 0.65);
+    expect(dayThreePhaseTwoCompletionAt, const Duration(seconds: 10));
+    expect(
+      dayThreeMediaPosition(const Duration(seconds: 6)),
+      const Duration(seconds: 9, milliseconds: 230),
+    );
     expect(dayThreeCandleQuestion, 'أين أنا؟');
     expect(dayThreeCandleStatus, 'المكان مظلم تماماً.. وهناك شمعة بجانبك');
     expect(dayThreeCandleAction, 'إشعال الشمعة بعود الثقاب 🔥');
