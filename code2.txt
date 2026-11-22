@@ -1,0 +1,35 @@
+import 'dart:async';
+import 'dart:ui';
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+
+/// نموذج بيانات المشهد التفاعلي
+class StorySceneData {
+  final String? shadowAr; // نص الظل بالعربي (أعلى الشاشة)
+  final String? shadowEn; // ترجمة نص الظل بالإنجليزي
+  final String statusAr; // وصف الموقف بالعربي
+  final String statusEn; // وصف الموقف بالإنجليزي
+  final String actionAr; // نص زر القرار بالعربي
+  final String actionEn; // نص زر القرار بالإنجليزي
+  final bool isQte; // هل المشهد يحتاج رد فعل سريع بوقت محدد؟
+  final int qteSeconds;
+
+  const StorySceneData({
+    this.shadowAr,
+    this.shadowEn,
+    required this.statusAr,
+    required this.statusEn,
+    required this.actionAr,
+    required this.actionEn,
+    this.isQte = false,
+    this.qteSeconds = 4,
+  });
+}
+
+/// قائمة المشاهد الجاهزة (اليوم الأول والثاني)
+final List<StorySceneData> storyScenes = [
+  const StorySceneData(
+    statusAr: 'الطريق هادئ.. لكن الظلال تتحرك في العمق',
+    statusEn: 'The path is quiet... yet shadows stir in the depths',
+    actionAr: 'تقدّم بحذر في الغابة 👣',
+    actionEn:

@@ -1,0 +1,21 @@
+Stack(
+  fit: StackFit.expand,
+  children: [
+    // 1. مشغل الفيديو الخاص بك
+    VideoPlayer(_videoController),
+
+    // 2. طبقة التفاعل والترجمة
+    InteractiveStoryOverlay(
+      scene: storyScenes[currentSceneIndex],
+      showInteraction: isVideoWaitingForDecision, // تصبح true عند نهاية المشهد
+      onActionPressed: () {
+        // انتقل للمشهد أو الفيديو التالي هنا
+        _playNextScene();
+      },
+      onQteFailed: () {
+        // ماذا يحدث لو انتهى وقت انهيار السقف دون ضغط (اهتزاز الشاشة أو إعادة المشهد)
+        _restartCurrentScene();
+      },
+    ),
+  ],
+)

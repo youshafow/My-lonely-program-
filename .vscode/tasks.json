@@ -1,0 +1,22 @@
+{
+	"version": "2.0.0",
+	"tasks": [
+		{
+			"label": "Run Flutter web preview",
+			"type": "shell",
+			"command": "/home/codespace/flutter/bin/flutter",
+			"args": [
+				"run",
+				"-d",
+				"web-server",
+				"--web-hostname",
+				"0.0.0.0",
+				"--web-port",
+				"8081"
+			],
+			"isBackground": true,
+			"problemMatcher": [],
+			"group": "build"
+		}
+	]
+}
