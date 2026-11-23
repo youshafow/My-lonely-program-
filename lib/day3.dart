@@ -8,8 +8,8 @@ import 'story_interaction_overlay.dart';
 import 'story_transition_placeholder.dart';
 
 const int dayThreeStartingPhase = 1;
-const dayThreeCandleInteractionAt = Duration.zero;
-const dayThreeFlashlightInteractionAt = Duration(milliseconds: 8500);
+const dayThreeCandleInteractionAt = Duration(seconds: 3);
+const dayThreeFlashlightInteractionAt = Duration(milliseconds: 9000);
 const dayThreePlaybackSpeed = 0.65;
 const dayThreePhaseTwoCompletionAt = Duration(seconds: 10);
 
@@ -41,10 +41,10 @@ const dayThreeCorridorCollapseIndices = {
 };
 
 const dayThreeVideoPaths = [
-  'assets/videos/day3/day3_04_first_corridor.mp4',
+  'assets/videos/day3/day3_01_door_fall.mp4',
   'assets/videos/day3/day3_02_light_candle.mp4',
   'assets/videos/day3/day3_03_what_way.mp4',
-  'assets/videos/day3/day3_04_first_corridor.mp4',
+  'assets/videos/day3/day3_05_mirror.mp4',
   'assets/videos/day3/day3_05_mirror.mp4',
   'assets/videos/day3/day3_06_second_corridor.mp4',
   'assets/videos/day3/day3_07_narrow_corridor_dark.mp4',
@@ -185,11 +185,7 @@ class _DayThreeVideoBackgroundState extends State<StorySequencePlayer> {
         phase == 10 ? 1.0 : dayThreePlaybackSpeed,
       );
       await controller.setVolume(1);
-      if (phase == 2) {
-        _pauseForAction();
-      } else {
-        await controller.play();
-      }
+      await controller.play();
       if (mounted && activation == _activation) setState(() {});
       await _disposeController(previousController);
 
@@ -262,7 +258,12 @@ class _DayThreeVideoBackgroundState extends State<StorySequencePlayer> {
     }
 
     if (_phase == 2) {
-      if (_phaseTwoInteractionStep == 1 &&
+      if (_phaseTwoInteractionStep == 0 &&
+          (value.position >= dayThreeCandleInteractionAt ||
+              value.isCompleted) &&
+          !_showActionOverlay) {
+        _pauseForAction();
+      } else if (_phaseTwoInteractionStep == 1 &&
           (value.position >= dayThreeFlashlightInteractionAt ||
               value.isCompleted) &&
           !_showActionOverlay) {

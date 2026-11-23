@@ -249,8 +249,8 @@ void main() {
 
   test('Day 3 video order and live scene context match the story', () async {
     expect(dayThreeStartingPhase, 1);
-    expect(dayThreeCandleInteractionAt, Duration.zero);
-    expect(dayThreeFlashlightInteractionAt, const Duration(milliseconds: 8500));
+    expect(dayThreeCandleInteractionAt, const Duration(seconds: 3));
+    expect(dayThreeFlashlightInteractionAt, const Duration(milliseconds: 9000));
     expect(dayThreePlaybackSpeed, 0.65);
     expect(dayThreePhaseTwoCompletionAt, const Duration(seconds: 10));
     expect(dayThreeCandleQuestion, 'أين أنا؟');
@@ -259,10 +259,10 @@ void main() {
     expect(dayThreeFlashlightStatus, 'الكشاف بجانبك على الأرض');
     expect(dayThreeFlashlightAction, 'التقط الكشاف 🔦');
     expect(dayThreeVideoPaths, [
-      'assets/videos/day3/day3_04_first_corridor.mp4',
+      'assets/videos/day3/day3_01_door_fall.mp4',
       'assets/videos/day3/day3_02_light_candle.mp4',
       'assets/videos/day3/day3_03_what_way.mp4',
-      'assets/videos/day3/day3_04_first_corridor.mp4',
+      'assets/videos/day3/day3_05_mirror.mp4',
       'assets/videos/day3/day3_05_mirror.mp4',
       'assets/videos/day3/day3_06_second_corridor.mp4',
       'assets/videos/day3/day3_07_narrow_corridor_dark.mp4',
