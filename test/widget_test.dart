@@ -259,10 +259,10 @@ void main() {
     expect(dayThreeFlashlightStatus, 'الكشاف بجانبك على الأرض');
     expect(dayThreeFlashlightAction, 'التقط الكشاف 🔦');
     expect(dayThreeVideoPaths, [
-      'assets/videos/day3/day3_01_door_fall.mp4',
+      'assets/videos/day3/day3_04_first_corridor.mp4',
       'assets/videos/day3/day3_02_light_candle.mp4',
       'assets/videos/day3/day3_03_what_way.mp4',
-      'assets/videos/day3/day3_05_mirror.mp4',
+      'assets/videos/day3/day3_04_first_corridor.mp4',
       'assets/videos/day3/day3_05_mirror.mp4',
       'assets/videos/day3/day3_06_second_corridor.mp4',
       'assets/videos/day3/day3_07_narrow_corridor_dark.mp4',
