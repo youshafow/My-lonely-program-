@@ -8,14 +8,10 @@ import 'story_interaction_overlay.dart';
 import 'story_transition_placeholder.dart';
 
 const int dayThreeStartingPhase = 1;
-const dayThreeCandleInteractionAt = Duration(seconds: 6);
-const dayThreeFlashlightInteractionAt = Duration(seconds: 8);
+const dayThreeCandleInteractionAt = Duration.zero;
+const dayThreeFlashlightInteractionAt = Duration(milliseconds: 8500);
 const dayThreePlaybackSpeed = 0.65;
 const dayThreePhaseTwoCompletionAt = Duration(seconds: 10);
-
-Duration dayThreeMediaPosition(Duration screenTime) => Duration(
-  microseconds: (screenTime.inMicroseconds * dayThreePlaybackSpeed).round(),
-);
 
 const dayThreeCandleQuestion = 'أين أنا؟';
 const dayThreeCandleStatus = 'المكان مظلم تماماً.. وهناك شمعة بجانبك';
@@ -189,7 +185,11 @@ class _DayThreeVideoBackgroundState extends State<StorySequencePlayer> {
         phase == 10 ? 1.0 : dayThreePlaybackSpeed,
       );
       await controller.setVolume(1);
-      await controller.play();
+      if (phase == 2) {
+        _pauseForAction();
+      } else {
+        await controller.play();
+      }
       if (mounted && activation == _activation) setState(() {});
       await _disposeController(previousController);
 
@@ -262,18 +262,13 @@ class _DayThreeVideoBackgroundState extends State<StorySequencePlayer> {
     }
 
     if (_phase == 2) {
-      final nextInteractionAt = _phaseTwoInteractionStep == 0
-          ? dayThreeCandleInteractionAt
-          : dayThreeFlashlightInteractionAt;
-      if (_phaseTwoInteractionStep < 2 &&
-          (value.position >= dayThreeMediaPosition(nextInteractionAt) ||
+      if (_phaseTwoInteractionStep == 1 &&
+          (value.position >= dayThreeFlashlightInteractionAt ||
               value.isCompleted) &&
           !_showActionOverlay) {
         _pauseForAction();
       } else if (_phaseTwoInteractionStep == 2 &&
-          (position >=
-                  dayThreeMediaPosition(dayThreePhaseTwoCompletionAt)
-                      .inMilliseconds ||
+          (position >= dayThreePhaseTwoCompletionAt.inMilliseconds ||
               value.isCompleted)) {
         unawaited(controller.pause());
         _completeVideo();

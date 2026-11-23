@@ -89,7 +89,10 @@ final storyScenes = [
 ];
 
 final dayTwoStoryScenes = [
-  storyScenes[3],
+  _storySceneFromCue(
+    ha.syncedStoryCues[3],
+    triggerAt: const Duration(seconds: 20),
+  ),
   _storySceneFromCue(
     ha.syncedStoryCues[7],
     triggerAt: const Duration(seconds: 22),

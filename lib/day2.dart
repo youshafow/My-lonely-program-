@@ -8,10 +8,6 @@ import 'story_transition_placeholder.dart';
 const dayTwoShadowForestEndAt = Duration(seconds: 10);
 const dayTwoPlaybackSpeed = 0.65;
 
-Duration dayTwoMediaPosition(Duration screenTime) => Duration(
-  microseconds: (screenTime.inMicroseconds * dayTwoPlaybackSpeed).round(),
-);
-
 class DayTwoVideoBackground extends StatefulWidget {
   const DayTwoVideoBackground({
     required this.videoPath,
@@ -111,15 +107,14 @@ class _DayTwoVideoBackgroundState extends State<DayTwoVideoBackground> {
     final scene = widget.scene;
     if (widget.phase == 1 &&
         !_whispersEnded &&
-        value.position >= dayTwoMediaPosition(dayTwoShadowForestEndAt)) {
+        value.position >= dayTwoShadowForestEndAt) {
       _whispersEnded = true;
       unawaited(_controller.setVolume(1));
       widget.onWhispersEnd();
     }
     if (scene != null &&
         !_checkpointSent &&
-        (value.position >= dayTwoMediaPosition(scene.triggerAt) ||
-            value.isCompleted)) {
+        (value.position >= scene.triggerAt || value.isCompleted)) {
       _checkpointSent = true;
       unawaited(_controller.pause());
       setState(() => _waitingForDecision = true);
@@ -154,9 +149,7 @@ class _DayTwoVideoBackgroundState extends State<DayTwoVideoBackground> {
 
     try {
       await _controller.seekTo(
-        dayTwoMediaPosition(
-          scene.retryFrom ?? Duration(seconds: (widget.phase - 1) * 10),
-        ),
+        scene.retryFrom ?? Duration(seconds: (widget.phase - 1) * 10),
       );
       await _controller.play();
     } catch (error) {

@@ -82,16 +82,21 @@ void main() {
     expect(storyScenes[3].triggerAt, const Duration(seconds: 14));
     expect(storyScenes[4].triggerAt, const Duration(seconds: 28));
     expect(dayTwoStoryScenes, hasLength(3));
-    expect(dayTwoStoryScenes[0].triggerAt, const Duration(seconds: 14));
+    expect(
+      dayTwoStoryScenes[0].triggerAt,
+      const Duration(seconds: 20),
+    );
     expect(dayTwoStoryScenes[1].triggerAt, const Duration(seconds: 22));
     expect(dayTwoStoryScenes[2].triggerAt, const Duration(seconds: 28));
+    expect(
+      dayTwoStoryScenes[0].statusAr,
+      'الظل يفتح البوابة الحجرية أمامك',
+    );
+    expect(dayTwoStoryScenes[0].actionAr, 'ادخل البوابة الحجرية 🚪');
     expect(dayTwoStoryScenes[1].statusAr, 'الظل يصعد السلم الحجري أمامك');
     expect(dayTwoStoryScenes[1].actionAr, 'اصعد السلم خلف الظل 🪜');
     expect(dayTwoPlaybackSpeed, 0.65);
-    expect(
-      dayTwoMediaPosition(dayTwoStoryScenes[1].triggerAt),
-      const Duration(seconds: 14, milliseconds: 300),
-    );
+    expect(dayTwoStoryScenes[2].statusAr, 'أُغلق الباب من خلفك.. لا طريق للعودة');
     expect(storyScenes[3].statusAr, ha.syncedStoryCues[3].statusAr);
     expect(storyScenes[3].actionAr, ha.syncedStoryCues[3].actionAr);
     expect(storyScenes[4].statusAr, ha.syncedStoryCues[4].statusAr);
@@ -109,34 +114,36 @@ void main() {
     expect(dayThreeFloorCollapseScene.actionAr, 'احمِ نفسك فوراً! ⚠️');
   });
 
-  testWidgets('Day 2 stairs interaction appears and action is tappable', (
+  testWidgets('Day 2 gate, stairs, and door interactions are tappable', (
     WidgetTester tester,
   ) async {
-    var actionPressed = false;
-    await tester.pumpWidget(
-      MaterialApp(
-        home: Scaffold(
-          body: Stack(
-            fit: StackFit.expand,
-            children: [
-              const ColoredBox(color: Colors.black),
-              InteractiveStoryOverlay(
-                scene: dayTwoStoryScenes[1],
-                showInteraction: true,
-                onActionPressed: () => actionPressed = true,
-                onQteFailed: () {},
-              ),
-            ],
+    for (final scene in dayTwoStoryScenes) {
+      var actionPressed = false;
+      await tester.pumpWidget(
+        MaterialApp(
+          home: Scaffold(
+            body: Stack(
+              fit: StackFit.expand,
+              children: [
+                const ColoredBox(color: Colors.black),
+                InteractiveStoryOverlay(
+                  scene: scene,
+                  showInteraction: true,
+                  onActionPressed: () => actionPressed = true,
+                  onQteFailed: () {},
+                ),
+              ],
+            ),
           ),
         ),
-      ),
-    );
+      );
 
-    expect(find.text('الظل يصعد السلم الحجري أمامك'), findsOneWidget);
-    expect(find.text('اصعد السلم خلف الظل 🪜'), findsOneWidget);
-    await tester.tap(find.text('اصعد السلم خلف الظل 🪜'));
-    await tester.pump();
-    expect(actionPressed, isTrue);
+      expect(find.text(scene.statusAr), findsOneWidget);
+      expect(find.text(scene.actionAr), findsOneWidget);
+      await tester.tap(find.text(scene.actionAr));
+      await tester.pump();
+      expect(actionPressed, isTrue);
+    }
   });
 
   testWidgets('Story action is delivered from the interaction overlay', (
@@ -242,14 +249,10 @@ void main() {
 
   test('Day 3 video order and live scene context match the story', () async {
     expect(dayThreeStartingPhase, 1);
-    expect(dayThreeCandleInteractionAt, const Duration(seconds: 6));
-    expect(dayThreeFlashlightInteractionAt, const Duration(seconds: 8));
+    expect(dayThreeCandleInteractionAt, Duration.zero);
+    expect(dayThreeFlashlightInteractionAt, const Duration(milliseconds: 8500));
     expect(dayThreePlaybackSpeed, 0.65);
     expect(dayThreePhaseTwoCompletionAt, const Duration(seconds: 10));
-    expect(
-      dayThreeMediaPosition(const Duration(seconds: 6)),
-      const Duration(seconds: 3, milliseconds: 900),
-    );
     expect(dayThreeCandleQuestion, 'أين أنا؟');
     expect(dayThreeCandleStatus, 'المكان مظلم تماماً.. وهناك شمعة بجانبك');
     expect(dayThreeCandleAction, 'إشعال الشمعة بعود الثقاب 🔥');
