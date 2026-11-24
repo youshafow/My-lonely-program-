@@ -12,6 +12,8 @@ const dayThreeCandleInteractionAt = Duration(seconds: 3);
 const dayThreeFlashlightInteractionAt = Duration(milliseconds: 9000);
 const dayThreePlaybackSpeed = 0.65;
 const dayThreePhaseTwoCompletionAt = Duration(seconds: 10);
+const dayThreeMirrorCorridorStartAt = Duration(seconds: 16);
+const dayThreeMirrorCorridorInteractionAt = Duration(seconds: 26);
 
 const dayThreeCandleQuestion = 'أين أنا؟';
 const dayThreeCandleStatus = 'المكان مظلم تماماً.. وهناك شمعة بجانبك';
@@ -44,7 +46,7 @@ const dayThreeVideoPaths = [
   'assets/videos/day3/day3_04_first_corridor.mp4',
   'assets/videos/day3/day3_02_light_candle.mp4',
   'assets/videos/day3/day3_03_what_way.mp4',
-  'assets/videos/day3/day3_04_first_corridor.mp4',
+  'assets/videos/day2/day2.mp4',
   'assets/videos/day3/day3_05_mirror.mp4',
   'assets/videos/day3/day3_06_second_corridor.mp4',
   'assets/videos/day3/day3_07_narrow_corridor_dark.mp4',
@@ -185,6 +187,9 @@ class _DayThreeVideoBackgroundState extends State<StorySequencePlayer> {
         phase == 10 ? 1.0 : dayThreePlaybackSpeed,
       );
       await controller.setVolume(1);
+      if (phase == dayThreeMirrorCorridorPhase) {
+        await controller.seekTo(dayThreeMirrorCorridorStartAt);
+      }
       await controller.play();
       if (mounted && activation == _activation) setState(() {});
       await _disposeController(previousController);
@@ -289,7 +294,9 @@ class _DayThreeVideoBackgroundState extends State<StorySequencePlayer> {
         }
         break;
       case 4:
-        if ((position >= 4200 || value.isCompleted) && !_showActionOverlay) {
+        if ((value.position >= dayThreeMirrorCorridorInteractionAt ||
+                value.isCompleted) &&
+            !_showActionOverlay) {
           _pauseForAction();
         }
         break;

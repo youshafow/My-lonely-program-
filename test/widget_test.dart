@@ -82,21 +82,18 @@ void main() {
     expect(storyScenes[3].triggerAt, const Duration(seconds: 14));
     expect(storyScenes[4].triggerAt, const Duration(seconds: 28));
     expect(dayTwoStoryScenes, hasLength(3));
-    expect(
-      dayTwoStoryScenes[0].triggerAt,
-      const Duration(seconds: 20),
-    );
+    expect(dayTwoStoryScenes[0].triggerAt, const Duration(seconds: 20));
     expect(dayTwoStoryScenes[1].triggerAt, const Duration(seconds: 22));
     expect(dayTwoStoryScenes[2].triggerAt, const Duration(seconds: 28));
-    expect(
-      dayTwoStoryScenes[0].statusAr,
-      'الظل يفتح البوابة الحجرية أمامك',
-    );
+    expect(dayTwoStoryScenes[0].statusAr, 'الظل يفتح البوابة الحجرية أمامك');
     expect(dayTwoStoryScenes[0].actionAr, 'ادخل البوابة الحجرية 🚪');
     expect(dayTwoStoryScenes[1].statusAr, 'الظل يصعد السلم الحجري أمامك');
     expect(dayTwoStoryScenes[1].actionAr, 'اصعد السلم خلف الظل 🪜');
     expect(dayTwoPlaybackSpeed, 0.65);
-    expect(dayTwoStoryScenes[2].statusAr, 'أُغلق الباب من خلفك.. لا طريق للعودة');
+    expect(
+      dayTwoStoryScenes[2].statusAr,
+      'أُغلق الباب من خلفك.. لا طريق للعودة',
+    );
     expect(storyScenes[3].statusAr, ha.syncedStoryCues[3].statusAr);
     expect(storyScenes[3].actionAr, ha.syncedStoryCues[3].actionAr);
     expect(storyScenes[4].statusAr, ha.syncedStoryCues[4].statusAr);
@@ -253,6 +250,8 @@ void main() {
     expect(dayThreeFlashlightInteractionAt, const Duration(milliseconds: 9000));
     expect(dayThreePlaybackSpeed, 0.65);
     expect(dayThreePhaseTwoCompletionAt, const Duration(seconds: 10));
+    expect(dayThreeMirrorCorridorStartAt, const Duration(seconds: 16));
+    expect(dayThreeMirrorCorridorInteractionAt, const Duration(seconds: 26));
     expect(dayThreeCandleQuestion, 'أين أنا؟');
     expect(dayThreeCandleStatus, 'المكان مظلم تماماً.. وهناك شمعة بجانبك');
     expect(dayThreeCandleAction, 'إشعال الشمعة بعود الثقاب 🔥');
@@ -262,7 +261,7 @@ void main() {
       'assets/videos/day3/day3_04_first_corridor.mp4',
       'assets/videos/day3/day3_02_light_candle.mp4',
       'assets/videos/day3/day3_03_what_way.mp4',
-      'assets/videos/day3/day3_04_first_corridor.mp4',
+      'assets/videos/day2/day2.mp4',
       'assets/videos/day3/day3_05_mirror.mp4',
       'assets/videos/day3/day3_06_second_corridor.mp4',
       'assets/videos/day3/day3_07_narrow_corridor_dark.mp4',
