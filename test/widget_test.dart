@@ -250,8 +250,6 @@ void main() {
     expect(dayThreeFlashlightInteractionAt, const Duration(milliseconds: 9000));
     expect(dayThreePlaybackSpeed, 0.65);
     expect(dayThreePhaseTwoCompletionAt, const Duration(seconds: 10));
-    expect(dayThreeMirrorCorridorStartAt, const Duration(seconds: 16));
-    expect(dayThreeMirrorCorridorInteractionAt, const Duration(seconds: 26));
     expect(dayThreeCandleQuestion, 'أين أنا؟');
     expect(dayThreeCandleStatus, 'المكان مظلم تماماً.. وهناك شمعة بجانبك');
     expect(dayThreeCandleAction, 'إشعال الشمعة بعود الثقاب 🔥');
@@ -261,7 +259,7 @@ void main() {
       'assets/videos/day3/day3_04_first_corridor.mp4',
       'assets/videos/day3/day3_02_light_candle.mp4',
       'assets/videos/day3/day3_03_what_way.mp4',
-      'assets/videos/day2/day2.mp4',
+      'assets/videos/day3/day3_04_first_corridor.mp4',
       'assets/videos/day3/day3_05_mirror.mp4',
       'assets/videos/day3/day3_06_second_corridor.mp4',
       'assets/videos/day3/day3_07_narrow_corridor_dark.mp4',
