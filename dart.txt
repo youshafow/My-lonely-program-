@@ -1,0 +1,507 @@
+import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
+
+class SceneChoiceOption {
+  final String id;
+  final String label;
+  final IconData? icon;
+  final String? passageKeyToMarkVisited;
+  final Duration? seekToOnSelect;
+
+  const SceneChoiceOption({
+    required this.id,
+    required this.label,
+    this.icon,
+    this.passageKeyToMarkVisited,
+    this.seekToOnSelect,
+  });
+}
+
+class InteractiveShadowSceneScreen extends StatefulWidget {
+  /// مثال: 'assets/videos/56302.mp4' أو رابط فيديو عبر VideoPlayerController.networkUrl
+  final String assetPath;
+
+  const InteractiveShadowSceneScreen({
+    super.key,
+    required this.assetPath,
+  });
+
+  @override
+  State<InteractiveShadowSceneScreen> createState() =>
+      _InteractiveShadowSceneScreenState();
+}
+
+class _InteractiveShadowSceneScreenState
+    extends State<InteractiveShadowSceneScreen>
+    with TickerProviderStateMixin {
+  static const Color _bgDark = Color(0xFF070908);
+  static const Color _cardDark = Color(0xFF101512);
+  static const Color _neonGreen = Color(0xFF00FF66);
+
+  late final VideoPlayerController _videoController;
+  late final AnimationController _pulseController;
+  late final Animation<double> _pulseOpacity;
+
+  bool _isInitialized = false;
+  String? _lastFeedbackToast;
+  final Set<String> _visitedPassages = {};
+  final Set<String> _dismissedChoiceWindows = {};
+
+  static const List<String> _allPassageKeys = [
+    'passage_collapse_1',
+    'passage_side_2',
+    'passage_ruins_3',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 620),
+    )..repeat(reverse: true);
+
+    _pulseOpacity = Tween<double>(begin: 0.25, end: 1.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
+    _videoController = VideoPlayerController.asset(widget.assetPath)
+      ..initialize().then((_) {
+        if (!mounted) return;
+        setState(() => _isInitialized = true);
+        _videoController.setLooping(false);
+        _videoController.play();
+      });
+
+    _videoController.addListener(_onVideoTick);
+  }
+
+  void _onVideoTick() {
+    if (!mounted || !_isInitialized) return;
+    setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _videoController.removeListener(_onVideoTick);
+    _videoController.dispose();
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  ({bool visible, String text}) _resolveCollapsePulse(int sec) {
+    if (sec >= 8 && sec <= 10) {
+      return (
+        visible: true,
+        text: 'ممرات لم تُزار بعد • انهيار في المجهول',
+      );
+    }
+    if (sec >= 25 && sec <= 28) {
+      return (
+        visible: true,
+        text: 'ممر لم تطأه قدماك بعد • استكشفه',
+      );
+    }
+    if (sec >= 34 && sec <= 37) {
+      return (
+        visible: true,
+        text: 'أطلال ممرات لم تُكتشف بعد',
+      );
+    }
+    return (visible: false, text: '');
+  }
+
+  String? _resolveQuietWhisper(int sec) {
+    if (sec >= 38 && sec <= 49) {
+      return 'التقط أنفاسك... ليس كل ما ينهار خلفك قد زرته';
+    }
+    if (sec >= 98 && sec <= 107) {
+      return 'طريق مضاء... وبعض الممرات ما زالت بانتظار عودتك';
+    }
+    return null;
+  }
+
+  ({String windowKey, List<SceneChoiceOption> options})? _resolveActiveChoices(
+    int sec,
+  ) {
+    if (sec >= 11 && sec <= 15) {
+      return (
+        windowKey: 'win_11_15',
+        options: const [
+          SceneChoiceOption(
+            id: 'explore_1',
+            label: 'استكشف ممر لم تزره',
+            icon: Icons.explore_outlined,
+            passageKeyToMarkVisited: 'passage_collapse_1',
+          ),
+          SceneChoiceOption(
+            id: 'run_1',
+            label: 'واصل الهروب',
+            icon: Icons.directions_run,
+          ),
+        ],
+      );
+    }
+
+    if (sec >= 30 && sec <= 33) {
+      return (
+        windowKey: 'win_30_33',
+        options: const [
+          SceneChoiceOption(
+            id: 'explore_2',
+            label: 'ادخل الممر الجانبي',
+            icon: Icons.alt_route,
+            passageKeyToMarkVisited: 'passage_side_2',
+          ),
+          SceneChoiceOption(
+            id: 'check_ruins',
+            label: 'تفقّد الأطلال',
+            icon: Icons.visibility_outlined,
+            passageKeyToMarkVisited: 'passage_ruins_3',
+          ),
+        ],
+      );
+    }
+
+    if (sec >= 52 && sec <= 59) {
+      return (
+        windowKey: 'win_52_59',
+        options: const [
+          SceneChoiceOption(
+            id: 'reach_light',
+            label: 'مدّ يدك نحو النور',
+            icon: Icons.wb_sunny_outlined,
+          ),
+          SceneChoiceOption(
+            id: 'watch_shadow',
+            label: 'تأمل الظل بهدوء',
+            icon: Icons.self_improvement,
+          ),
+        ],
+      );
+    }
+
+    final totalSec = _videoController.value.duration.inSeconds;
+    if (totalSec > 0 && sec >= totalSec - 5) {
+      return (
+        windowKey: 'win_end',
+        options: const [
+          SceneChoiceOption(
+            id: 'replay_unvisited',
+            label: 'جرّب ممراً لم تزره بعد',
+            icon: Icons.replay,
+            seekToOnSelect: Duration(seconds: 8),
+          ),
+          SceneChoiceOption(
+            id: 'restart_all',
+            label: 'إعادة التجربة من البداية',
+            icon: Icons.refresh,
+            seekToOnSelect: Duration.zero,
+          ),
+        ],
+      );
+    }
+
+    return null;
+  }
+
+  void _handleChoiceSelected(String windowKey, SceneChoiceOption option) {
+    setState(() {
+      _dismissedChoiceWindows.add(windowKey);
+      if (option.passageKeyToMarkVisited != null) {
+        _visitedPassages.add(option.passageKeyToMarkVisited!);
+      }
+      _lastFeedbackToast = 'اخترت: ${option.label}';
+    });
+
+    if (option.seekToOnSelect != null) {
+      _videoController.seekTo(option.seekToOnSelect!);
+      _videoController.play();
+    }
+
+    Future.delayed(const Duration(seconds: 2), () {
+      if (!mounted) return;
+      setState(() => _lastFeedbackToast = null);
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final currentSec = _videoController.value.position.inSeconds;
+    final pulseState = _resolveCollapsePulse(currentSec);
+    final whisperText = _resolveQuietWhisper(currentSec);
+    final choicePack = _resolveActiveChoices(currentSec);
+    final showChoices = choicePack != null &&
+        !_dismissedChoiceWindows.contains(choicePack.windowKey);
+
+    final unvisitedCount = _allPassageKeys
+        .where((key) => !_visitedPassages.contains(key))
+        .length;
+
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: _bgDark,
+        body: SafeArea(
+          child: !_isInitialized
+              ? const Center(
+                  child: CircularProgressIndicator(color: _neonGreen),
+                )
+              : Stack(
+                  fit: StackFit.expand,
+                  children: [
+                    // 1. الفيديو الرئيسي
+                    Center(
+                      child: AspectRatio(
+                        aspectRatio: _videoController.value.aspectRatio,
+                        child: VideoPlayer(_videoController),
+                      ),
+                    ),
+
+                    // 2. عدّاد خفيف للممرات التي لم تُزر بعد (أعلى اليمين)
+                    Positioned(
+                      top: 14,
+                      right: 14,
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 6,
+                        ),
+                        decoration: BoxDecoration(
+                          color: _cardDark.withOpacity(0.88),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: _neonGreen.withOpacity(0.45),
+                          ),
+                        ),
+                        child: Text(
+                          'ممرات لم تُزار بعد: $unvisitedCount / ${_allPassageKeys.length}',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 11.5,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // 3. زر تشغيل / إيقاف مؤقت (أعلى اليسار)
+                    Positioned(
+                      top: 10,
+                      left: 12,
+                      child: IconButton(
+                        onPressed: () {
+                          if (_videoController.value.isPlaying) {
+                            _videoController.pause();
+                          } else {
+                            _videoController.play();
+                          }
+                        },
+                        icon: Icon(
+                          _videoController.value.isPlaying
+                              ? Icons.pause_circle_filled
+                              : Icons.play_circle_filled,
+                          color: _neonGreen.withOpacity(0.9),
+                          size: 32,
+                        ),
+                      ),
+                    ),
+
+                    // 4. شريط التنبيه النابض (بينور ويطفي) وقت الانهيار
+                    Positioned(
+                      top: 62,
+                      left: 16,
+                      right: 16,
+                      child: Center(
+                        child: IgnorePointer(
+                          ignoring: !pulseState.visible,
+                          child: AnimatedOpacity(
+                            duration: const Duration(milliseconds: 180),
+                            opacity: pulseState.visible ? 1.0 : 0.0,
+                            child: FadeTransition(
+                              opacity: _pulseOpacity,
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(
+                                  horizontal: 14,
+                                  vertical: 8,
+                                ),
+                                decoration: BoxDecoration(
+                                  color: _cardDark.withOpacity(0.94),
+                                  borderRadius: BorderRadius.circular(24),
+                                  border: Border.all(
+                                    color: _neonGreen.withOpacity(0.85),
+                                    width: 1.2,
+                                  ),
+                                  boxShadow: [
+                                    BoxShadow(
+                                      color: _neonGreen.withOpacity(0.32),
+                                      blurRadius: 14,
+                                      spreadRadius: 1,
+                                    ),
+                                  ],
+                                ),
+                                child: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  children: [
+                                    const Icon(
+                                      Icons.explore_outlined,
+                                      size: 16,
+                                      color: _neonGreen,
+                                    ),
+                                    const SizedBox(width: 8),
+                                    Flexible(
+                                      child: Text(
+                                        pulseState.text,
+                                        maxLines: 1,
+                                        overflow: TextOverflow.ellipsis,
+                                        style: const TextStyle(
+                                          color: Colors.white,
+                                          fontSize: 12.5,
+                                          fontWeight: FontWeight.w700,
+                                        ),
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    // 5. رسالة تشويقية هادئة في اللحظات غير الصاخبة
+                    if (whisperText != null && !pulseState.visible)
+                      Positioned(
+                        bottom: 105,
+                        left: 20,
+                        right: 20,
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 8,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _bgDark.withOpacity(0.82),
+                              borderRadius: BorderRadius.circular(16),
+                              border: Border.all(
+                                color: Colors.white.withOpacity(0.14),
+                              ),
+                            ),
+                            child: Text(
+                              whisperText,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: Colors.white.withOpacity(0.9),
+                                fontSize: 12,
+                                fontStyle: FontStyle.italic,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                    // 6. إشعار تأكيد سريع عند الضغط على خيار
+                    if (_lastFeedbackToast != null)
+                      Positioned(
+                        bottom: 155,
+                        left: 24,
+                        right: 24,
+                        child: Center(
+                          child: Container(
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 14,
+                              vertical: 7,
+                            ),
+                            decoration: BoxDecoration(
+                              color: _neonGreen.withOpacity(0.18),
+                              borderRadius: BorderRadius.circular(20),
+                              border: Border.all(
+                                color: _neonGreen.withOpacity(0.7),
+                              ),
+                            ),
+                            child: Text(
+                              _lastFeedbackToast!,
+                              style: const TextStyle(
+                                color: _neonGreen,
+                                fontSize: 12,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
+
+                    // 7. أزرار التفاعل السريع المتدرجة أسفل الشاشة
+                    Positioned(
+                      bottom: 26,
+                      left: 14,
+                      right: 14,
+                      child: IgnorePointer(
+                        ignoring: !showChoices,
+                        child: AnimatedOpacity(
+                          duration: const Duration(milliseconds: 260),
+                          opacity: showChoices ? 1.0 : 0.0,
+                          child: choicePack == null
+                              ? const SizedBox.shrink()
+                              : Wrap(
+                                  alignment: WrapAlignment.center,
+                                  spacing: 10,
+                                  runSpacing: 8,
+                                  children: choicePack.options.map((opt) {
+                                    return InkWell(
+                                      borderRadius: BorderRadius.circular(22),
+                                      onTap: () => _handleChoiceSelected(
+                                        choicePack.windowKey,
+                                        opt,
+                                      ),
+                                      child: Container(
+                                        padding: const EdgeInsets.symmetric(
+                                          horizontal: 14,
+                                          vertical: 9,
+                                        ),
+                                        decoration: BoxDecoration(
+                                          color: _cardDark.withOpacity(0.92),
+                                          borderRadius:
+                                              BorderRadius.circular(22),
+                                          border: Border.all(
+                                            color: _neonGreen.withOpacity(0.65),
+                                          ),
+                                        ),
+                                        child: Row(
+                                          mainAxisSize: MainAxisSize.min,
+                                          children: [
+                                            if (opt.icon != null) ...[
+                                              Icon(
+                                                opt.icon,
+                                                size: 15,
+                                                color: _neonGreen,
+                                              ),
+                                              const SizedBox(width: 6),
+                                            ],
+                                            Text(
+                                              opt.label,
+                                              style: const TextStyle(
+                                                color: Colors.white,
+                                                fontSize: 12.5,
+                                                fontWeight: FontWeight.w600,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                      ),
+                                    );
+                                  }).toList(),
+                                ),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+        ),
+      ),
+    );
+  }
+}
