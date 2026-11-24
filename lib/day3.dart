@@ -8,8 +8,8 @@ import 'story_interaction_overlay.dart';
 import 'story_transition_placeholder.dart';
 
 const int dayThreeStartingPhase = 1;
-const dayThreeCandleInteractionAt = Duration(milliseconds: 1500);
-const dayThreeFlashlightInteractionAt = Duration(milliseconds: 8500);
+const dayThreeCandleInteractionAt = Duration.zero;
+const dayThreeFlashlightInteractionAt = Duration(milliseconds: 5500);
 const dayThreePlaybackSpeed = 0.65;
 const dayThreePhaseTwoCompletionAt = Duration(seconds: 10);
 
@@ -185,7 +185,11 @@ class _DayThreeVideoBackgroundState extends State<StorySequencePlayer> {
         phase == 10 ? 1.0 : dayThreePlaybackSpeed,
       );
       await controller.setVolume(1);
-      await controller.play();
+      if (phase == 2 && _phaseTwoInteractionStep == 0) {
+        _pauseForAction();
+      } else {
+        await controller.play();
+      }
       if (mounted && activation == _activation) setState(() {});
       await _disposeController(previousController);
 

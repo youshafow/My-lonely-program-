@@ -246,8 +246,8 @@ void main() {
 
   test('Day 3 video order and live scene context match the story', () async {
     expect(dayThreeStartingPhase, 1);
-    expect(dayThreeCandleInteractionAt, const Duration(milliseconds: 1500));
-    expect(dayThreeFlashlightInteractionAt, const Duration(milliseconds: 8500));
+    expect(dayThreeCandleInteractionAt, Duration.zero);
+    expect(dayThreeFlashlightInteractionAt, const Duration(milliseconds: 5500));
     expect(dayThreePlaybackSpeed, 0.65);
     expect(dayThreePhaseTwoCompletionAt, const Duration(seconds: 10));
     expect(dayThreeCandleQuestion, 'أين أنا؟');
