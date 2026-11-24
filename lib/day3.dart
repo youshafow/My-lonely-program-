@@ -8,8 +8,8 @@ import 'story_interaction_overlay.dart';
 import 'story_transition_placeholder.dart';
 
 const int dayThreeStartingPhase = 1;
-const dayThreeCandleInteractionAt = Duration(seconds: 3);
-const dayThreeFlashlightInteractionAt = Duration(milliseconds: 9000);
+const dayThreeCandleInteractionAt = Duration(milliseconds: 1500);
+const dayThreeFlashlightInteractionAt = Duration(milliseconds: 8500);
 const dayThreePlaybackSpeed = 0.65;
 const dayThreePhaseTwoCompletionAt = Duration(seconds: 10);
 
