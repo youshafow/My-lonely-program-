@@ -82,7 +82,7 @@ void main() {
     expect(storyScenes[3].triggerAt, const Duration(seconds: 14));
     expect(storyScenes[4].triggerAt, const Duration(seconds: 28));
     expect(dayTwoStoryScenes, hasLength(3));
-    expect(dayTwoStoryScenes[0].triggerAt, const Duration(seconds: 20));
+    expect(dayTwoStoryScenes[0].triggerAt, const Duration(seconds: 16));
     expect(dayTwoStoryScenes[1].triggerAt, const Duration(seconds: 22));
     expect(dayTwoStoryScenes[2].triggerAt, const Duration(seconds: 28));
     expect(dayTwoStoryScenes[0].statusAr, 'الظل يفتح البوابة الحجرية أمامك');
