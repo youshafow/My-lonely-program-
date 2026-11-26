@@ -18,6 +18,38 @@ const dayFourVideoPaths = [
 
 const dayFourSharedStoryStartIndex = 4;
 
+const dayFourVideoDurations = [
+  Duration(milliseconds: 8847),
+  Duration(milliseconds: 8940),
+  Duration(milliseconds: 15325),
+  Duration(milliseconds: 12539),
+  Duration(milliseconds: 16720),
+  Duration(milliseconds: 19923),
+  Duration(milliseconds: 10027),
+  Duration(milliseconds: 30000),
+  Duration(milliseconds: 33739),
+];
+
+List<String> dayFourInteractiveExperiencePaths(int collapseIndex) {
+  if (collapseIndex < 0 || collapseIndex >= dayFourSharedStoryStartIndex) {
+    throw ArgumentError.value(collapseIndex, 'collapseIndex');
+  }
+  return [
+    dayFourVideoPaths[collapseIndex],
+    ...dayFourVideoPaths.skip(dayFourSharedStoryStartIndex),
+  ];
+}
+
+List<Duration> dayFourInteractiveExperienceDurations(int collapseIndex) {
+  if (collapseIndex < 0 || collapseIndex >= dayFourSharedStoryStartIndex) {
+    throw ArgumentError.value(collapseIndex, 'collapseIndex');
+  }
+  return [
+    dayFourVideoDurations[collapseIndex],
+    ...dayFourVideoDurations.skip(dayFourSharedStoryStartIndex),
+  ];
+}
+
 int? dayFourNextVideoIndex(int currentIndex, {int? corridorCollapseIndex}) {
   if (currentIndex == dayFourVideoPaths.length - 1) return null;
   if (corridorCollapseIndex != null) {
