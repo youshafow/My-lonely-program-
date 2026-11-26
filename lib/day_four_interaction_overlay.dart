@@ -80,22 +80,25 @@ class _DayFourInteractionOverlayState extends State<DayFourInteractionOverlay>
 
   /// شريط التنبيه النابض (بينور ويطفي) مقتصر على الـ 4 تدميرات الأخيرة فقط
   ({bool visible, String text}) _resolveFinalFourDestructionPulse(int sec) {
-    if (sec >= 22 && sec <= 24) {
-      return (visible: true, text: 'تدمير 1/4 • ممرات لم تُزار بعد');
+    if (sec == 24 || sec == 25) {
+      return (visible: true, text: 'انهيار 1/4 • ممرات لم تزرها بعد');
     }
-    if (sec >= 25 && sec <= 27) {
-      return (visible: true, text: 'تدمير 2/4 • ممر لم تطأه قدماك بعد');
+    if (sec >= 26 && sec <= 29) {
+      return (visible: true, text: 'انهيار 2/4 • ممرات لم تزرها بعد');
     }
-    if (sec >= 30 && sec <= 32) {
-      return (visible: true, text: 'تدمير 3/4 • ممر جانبي لم تُكتشف بعد');
+    if (sec >= 30 && sec <= 33) {
+      return (visible: true, text: 'انهيار 3/4 • ممرات لم تزرها بعد');
     }
-    if (sec >= 34 && sec <= 37) {
-      return (visible: true, text: 'تدمير 4/4 • أطلال ممرات بانتظار زيارتك');
+    if (sec >= 34 && sec <= 36) {
+      return (visible: true, text: 'انهيار 4/4 • ممرات لم تزرها بعد');
     }
     return (visible: false, text: '');
   }
 
   String? _resolveQuietWhisper(int sec) {
+    if (sec >= 12 && sec <= 21) {
+      return 'التقط أنفاسك... هناك ممرات لم تزرها بعد';
+    }
     if (sec >= 38 && sec <= 49) {
       return 'التقط أنفاسك... هناك ممرات لم تزرها بعد';
     }
@@ -108,21 +111,39 @@ class _DayFourInteractionOverlayState extends State<DayFourInteractionOverlay>
   ({String windowKey, List<SceneChoiceOption> options})? _resolveActiveChoices(
     int sec,
   ) {
-    if (sec >= 26 && sec <= 33) {
+    if (sec >= 12 && sec <= 21) {
       return (
-        windowKey: 'win_destructions_26_33',
+        windowKey: 'win_mirror_12_21',
         options: const [
           SceneChoiceOption(
-            id: 'visit_unvisited_1',
-            label: 'استكشف ممر لم تزره',
-            icon: Icons.explore_outlined,
-            passageKeyToMarkVisited: 'final_destruction_2',
+            id: 'mirror_confront',
+            label: 'مواجهة ما ظهر خلف المرآة ورفض الاستسلام',
+            icon: Icons.shield_outlined,
           ),
           SceneChoiceOption(
-            id: 'visit_unvisited_2',
-            label: 'تفقّد الممر المنهار',
+            id: 'mirror_retreat',
+            label: 'التراجع والبحث عن ممر آخر',
             icon: Icons.alt_route,
-            passageKeyToMarkVisited: 'final_destruction_3',
+          ),
+        ],
+      );
+    }
+
+    if (sec >= 26 && sec <= 36) {
+      return (
+        windowKey: 'win_destructions_26_36',
+        options: const [
+          SceneChoiceOption(
+            id: 'mark_explore_next',
+            label: 'تثبيت إشارة للعودة واستكشاف الممرات الأربعة',
+            icon: Icons.explore_outlined,
+            passageKeyToMarkVisited: 'passage_collapse_26',
+          ),
+          SceneChoiceOption(
+            id: 'stay_mirror_path',
+            label: 'الاستمرار في ممر المرآة رغم الانهيارات',
+            icon: Icons.alt_route,
+            passageKeyToMarkVisited: 'passage_collapse_30',
           ),
         ],
       );

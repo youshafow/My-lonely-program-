@@ -1203,8 +1203,9 @@ class _ShadowChatScreenState extends State<ShadowChatScreen>
           if (currentStage != 3 ||
               (_isDayThreeVideoPaused && !_dayThreeInteractionActive))
             IgnorePointer(child: Container(color: _getOverlayColor())),
-          if (currentStage != 3 ||
-              (_isDayThreeVideoPaused && !_dayThreeInteractionActive))
+          if (currentStage != 4 &&
+              (currentStage != 3 ||
+                  (_isDayThreeVideoPaused && !_dayThreeInteractionActive)))
             Visibility(
               visible:
                   !_isStoryInteractionActive && !_dayThreeInteractionActive,

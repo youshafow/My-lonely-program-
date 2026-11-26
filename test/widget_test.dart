@@ -15,6 +15,7 @@ import 'package:shadow_shat/burning_card_with_real_fire.dart';
 import 'package:shadow_shat/day2.dart';
 import 'package:shadow_shat/day3.dart';
 import 'package:shadow_shat/day4.dart';
+import 'package:shadow_shat/day_four_interaction_overlay.dart';
 import 'package:shadow_shat/ha_interaction.dart' as ha;
 import 'package:shadow_shat/story_interaction_overlay.dart';
 import 'package:shadow_shat/story_transition_placeholder.dart';
@@ -69,6 +70,48 @@ void main() {
         corridorCollapseIndex: 3,
       ),
       isNull,
+    );
+  });
+
+  testWidgets('Day 4 shared-collapse hint and choices are visible', (
+    WidgetTester tester,
+  ) async {
+    final position = ValueNotifier(const Duration(seconds: 12));
+    addTearDown(position.dispose);
+
+    await tester.pumpWidget(
+      MaterialApp(
+        home: Scaffold(
+          body: DayFourInteractionOverlay(
+            position: position,
+            totalDuration: const Duration(minutes: 3),
+            isPlaying: true,
+            onTogglePlayback: () {},
+            onSeek: (_) {},
+          ),
+        ),
+      ),
+    );
+
+    expect(
+      find.text('التقط أنفاسك... هناك ممرات لم تزرها بعد'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('مواجهة ما ظهر خلف المرآة ورفض الاستسلام'),
+      findsOneWidget,
+    );
+
+    position.value = const Duration(seconds: 26);
+    await tester.pump();
+
+    expect(
+      find.text('تثبيت إشارة للعودة واستكشاف الممرات الأربعة'),
+      findsOneWidget,
+    );
+    expect(
+      find.text('الاستمرار في ممر المرآة رغم الانهيارات'),
+      findsOneWidget,
     );
   });
 
