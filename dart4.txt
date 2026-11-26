@@ -1,0 +1,515 @@
+import 'package:flutter/material.dart';
+import 'package:video_player/video_player.dart';
+
+class MysteryChoiceOption {
+  final String id;
+  final String titleAr;
+  final String titleEn;
+  final bool isPrimary;
+  final int braveryChange;
+  final String? passageIdToMarkVisited;
+  final Duration? jumpTo;
+
+  const MysteryChoiceOption({
+    required this.id,
+    required this.titleAr,
+    required this.titleEn,
+    this.isPrimary = false,
+    this.braveryChange = 0,
+    this.passageIdToMarkVisited,
+    this.jumpTo,
+  });
+}
+
+class MysteryCardPrompt {
+  final String id;
+  final String questionAr;
+  final String questionEn;
+  final List<MysteryChoiceOption> options;
+
+  const MysteryCardPrompt({
+    required this.id,
+    required this.questionAr,
+    required this.questionEn,
+    required this.options,
+  });
+}
+
+class MirrorPassageInteractiveScreen extends StatefulWidget {
+  final String videoAssetPath;
+
+  const MirrorPassageInteractiveScreen({
+    super.key,
+    required this.videoAssetPath,
+  });
+
+  @override
+  State<MirrorPassageInteractiveScreen> createState() =>
+      _MirrorPassageInteractiveScreenState();
+}
+
+class _MirrorPassageInteractiveScreenState
+    extends State<MirrorPassageInteractiveScreen>
+    with SingleTickerProviderStateMixin {
+  static const Color _bgBlack = Color(0xFF050706);
+  static const Color _headerDark = Color(0xFF0D120F);
+  static const Color _neonGreen = Color(0xFF00FF66);
+  static const Color _mintButton = Color(0xFF88D498);
+
+  late final VideoPlayerController _videoController;
+  late final AnimationController _pulseController;
+  late final Animation<double> _pulseOpacity;
+
+  bool _isReady = false;
+  int _bravery = 20;
+  final Set<String> _answeredCardIds = {};
+  final Set<String> _exploredOtherPassages = {};
+
+  // الـ 4 انهيارات المختصرة للممرات الأخرى التي لم يزرها اللاعب بعد
+  static const List<String> _otherPassages = [
+    'passage_collapse_24',
+    'passage_collapse_26',
+    'passage_collapse_30',
+    'passage_collapse_34',
+  ];
+
+  @override
+  void initState() {
+    super.initState();
+
+    _pulseController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 560),
+    )..repeat(reverse: true);
+
+    _pulseOpacity = Tween<double>(begin: 0.22, end: 1.0).animate(
+      CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+
+    _videoController = VideoPlayerController.asset(widget.videoAssetPath)
+      ..initialize().then((_) {
+        if (!mounted) return;
+        setState(() => _isReady = true);
+        _videoController.setLooping(false);
+        _videoController.play();
+      });
+
+    _videoController.addListener(_onTick);
+  }
+
+  void _onTick() {
+    if (!mounted || !_isReady) return;
+    setState(() {});
+  }
+
+  @override
+  void dispose() {
+    _videoController.removeListener(_onTick);
+    _videoController.dispose();
+    _pulseController.dispose();
+    super.dispose();
+  }
+
+  /// شريط التنبيه النابض (بينور ويطفي) على الـ 4 انهيارات المختصرة فقط (00:24 - 00:36)
+  ({bool show, String labelAr, String labelEn}) _resolveUnvisitedPassagesPulse(
+    int sec,
+  ) {
+    if (sec == 24 || sec == 25) {
+      return (
+        show: true,
+        labelAr: 'انهيار 1/4 • ممرات لم تزرها بعد',
+        labelEn: 'Collapse 1/4 • Passages you haven\'t visited yet',
+      );
+    }
+    if (sec >= 26 && sec <= 29) {
+      return (
+        show: true,
+        labelAr: 'انهيار 2/4 • ممرات لم تزرها بعد',
+        labelEn: 'Collapse 2/4 • Passages you haven\'t visited yet',
+      );
+    }
+    if (sec >= 30 && sec <= 33) {
+      return (
+        show: true,
+        labelAr: 'انهيار 3/4 • ممرات لم تزرها بعد',
+        labelEn: 'Collapse 3/4 • Passages you haven\'t visited yet',
+      );
+    }
+    if (sec >= 34 && sec <= 36) {
+      return (
+        show: true,
+        labelAr: 'انهيار 4/4 • ممرات لم تزرها بعد',
+        labelEn: 'Collapse 4/4 • Passages you haven\'t visited yet',
+      );
+    }
+    return (show: false, labelAr: '', labelEn: '');
+  }
+
+  /// بطاقات الأسئلة الغامضة مضبوطة على الثواني الفعلية (بدون سؤال الانعكاس الموجود مسبقاً)
+  MysteryCardPrompt? _resolveMysteryCard(int sec) {
+    // 1. بعد تحطم المرآة وظهور الكيان خلفها (00:12 - 00:21)
+    if (sec >= 12 && sec <= 21) {
+      return const MysteryCardPrompt(
+        id: 'card_1_mirror_monster',
+        questionAr:
+            'تحطمت المرآة وظهر ما كان يختبئ خلفك... هل الوحش يطاردك أم يكشف سراً دفيناً؟',
+        questionEn:
+            'The mirror shattered and what hid behind you appeared... Is the monster hunting you or revealing a buried secret?',
+        options: [
+          MysteryChoiceOption(
+            id: 'mirror_confront',
+            titleAr: 'مواجهة ما ظهر خلف المرآة ورفض الاستسلام',
+            titleEn: 'Confront what appeared behind the mirror and refuse surrender',
+            isPrimary: true,
+            braveryChange: 10,
+          ),
+          MysteryChoiceOption(
+            id: 'mirror_retreat',
+            titleAr: 'التراجع والبحث عن ممر آخر لم يُفتح بعد',
+            titleEn: 'Step back and search for an unopened passage',
+            isPrimary: false,
+            braveryChange: -5,
+          ),
+        ],
+      );
+    }
+
+    // 2. أثناء الـ 4 انهيارات المختصرة للممرات غير المزارة (00:26 - 00:36)
+    if (sec >= 26 && sec <= 36) {
+      return const MysteryCardPrompt(
+        id: 'card_2_four_visions',
+        questionAr:
+            'أربعة ممرات لم تزرها بعد تنهار أمامك... ما الذي ينتظرك لو عدت إليها؟',
+        questionEn:
+            'Four passages you haven\'t visited yet are collapsing ahead... What awaits you if you return to them?',
+        options: [
+          MysteryChoiceOption(
+            id: 'mark_explore_next',
+            titleAr: 'تثبيت إشارة للعودة واستكشاف الممرات الأربعة',
+            titleEn: 'Mark a sign to return and explore the four passages',
+            isPrimary: true,
+            braveryChange: 10,
+            passageIdToMarkVisited: 'passage_collapse_26',
+          ),
+          MysteryChoiceOption(
+            id: 'stay_mirror_path',
+            titleAr: 'الاستمرار في ممر المرآة رغم الانهيارات',
+            titleEn: 'Stay on the mirror passage despite the collapses',
+            isPrimary: false,
+            braveryChange: 5,
+          ),
+        ],
+      );
+    }
+
+    // 3. عند الوصول للغابة والرسائل الختامية (02:08 - النهاية)
+    if (sec >= 128) {
+      return const MysteryCardPrompt(
+        id: 'card_3_ending_mystery',
+        questionAr:
+            'وصلت إلى هنا... لكن المتاهة ما زالت تخفي ممرات لم تزرها بعد.',
+        questionEn:
+            'You made it here... yet the maze still hides passages you haven\'t visited yet.',
+        options: [
+          MysteryChoiceOption(
+            id: 'ending_explore_others',
+            titleAr: 'العودة وتجربة ممر لم تزره بعد',
+            titleEn: 'Go back and try a passage you haven\'t visited yet',
+            isPrimary: true,
+            braveryChange: 10,
+            passageIdToMarkVisited: 'passage_collapse_34',
+            jumpTo: Duration(seconds: 24),
+          ),
+          MysteryChoiceOption(
+            id: 'ending_replay_mirror',
+            titleAr: 'إعادة الممر من البداية',
+            titleEn: 'Replay the passage from the beginning',
+            isPrimary: false,
+            braveryChange: 0,
+            jumpTo: Duration.zero,
+          ),
+        ],
+      );
+    }
+
+    return null;
+  }
+
+  void _selectOption(String cardId, MysteryChoiceOption option) {
+    setState(() {
+      _answeredCardIds.add(cardId);
+      _bravery = (_bravery + option.braveryChange).clamp(0, 100);
+      if (option.passageIdToMarkVisited != null) {
+        _exploredOtherPassages.add(option.passageIdToMarkVisited!);
+      }
+    });
+
+    if (option.jumpTo != null) {
+      _videoController.seekTo(option.jumpTo!);
+      _videoController.play();
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final sec = _videoController.value.position.inSeconds;
+    final pulse = _resolveUnvisitedPassagesPulse(sec);
+    final activeCard = _resolveMysteryCard(sec);
+    final showCard =
+        activeCard != null && !_answeredCardIds.contains(activeCard.id);
+
+    final unvisitedCount = _otherPassages
+        .where((p) => !_exploredOtherPassages.contains(p))
+        .length;
+
+    return Directionality(
+      textDirection: TextDirection.rtl,
+      child: Scaffold(
+        backgroundColor: _bgBlack,
+        body: SafeArea(
+          child: !_isReady
+              ? const Center(
+                  child: CircularProgressIndicator(color: _neonGreen),
+                )
+              : Column(
+                  children: [
+                    // شريط الحالة العلوي (عربي + إنجليزي)
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 14,
+                        vertical: 8,
+                      ),
+                      color: _headerDark,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'ممرات لم تزرها: $unvisitedCount/4 • Unvisited: $unvisitedCount/4',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                          Text(
+                            'Bravery: $_bravery%',
+                            style: const TextStyle(
+                              color: _mintButton,
+                              fontSize: 12,
+                              fontWeight: FontWeight.w700,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // شريط هوية The Shadow
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.symmetric(
+                        horizontal: 12,
+                        vertical: 8,
+                      ),
+                      decoration: BoxDecoration(
+                        color: _headerDark,
+                        border: Border(
+                          bottom: BorderSide(
+                            color: Colors.white.withOpacity(0.08),
+                          ),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          IconButton(
+                            onPressed: () {
+                              if (_videoController.value.isPlaying) {
+                                _videoController.pause();
+                              } else {
+                                _videoController.play();
+                              }
+                              setState(() {});
+                            },
+                            icon: Icon(
+                              _videoController.value.isPlaying
+                                  ? Icons.pause
+                                  : Icons.play_arrow,
+                              color: Colors.white,
+                            ),
+                          ),
+                          Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: Colors.black,
+                              border: Border.all(
+                                color: _neonGreen.withOpacity(0.6),
+                              ),
+                            ),
+                            child: const Icon(
+                              Icons.visibility,
+                              color: _neonGreen,
+                              size: 19,
+                            ),
+                          ),
+                          const SizedBox(width: 10),
+                          const Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'The Shadow',
+                                style: TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 14,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              Text(
+                                'GUIDE • YOUR INNER MIRROR',
+                                style: TextStyle(
+                                  color: _mintButton,
+                                  fontSize: 10,
+                                  letterSpacing: 0.8,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+
+                    // مساحة الفيديو + شريط الوميض على الـ 4 انهيارات + بطاقات الأسئلة الغامضة
+                    Expanded(
+                      child: Stack(
+                        fit: StackFit.expand,
+                        children: [
+                          Center(
+                            child: AspectRatio(
+                              aspectRatio: _videoController.value.aspectRatio,
+                              child: VideoPlayer(_videoController),
+                            ),
+                          ),
+
+                          if (showCard)
+                            IgnorePointer(
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  gradient: LinearGradient(
+                                    begin: Alignment.topCenter,
+                                    end: Alignment.bottomCenter,
+                                    colors: [
+                                      Colors.transparent,
+                                      Colors.black.withOpacity(0.78),
+                                    ],
+                                    stops: const [0.30, 1.0],
+                                  ),
+                                ),
+                              ),
+                            ),
+
+                          // شريط التنبيه النابض (بينور ويطفي) على الـ 4 انهيارات المختصرة فقط
+                          Positioned(
+                            top: 14,
+                            left: 16,
+                            right: 16,
+                            child: IgnorePointer(
+                              ignoring: !pulse.show,
+                              child: AnimatedOpacity(
+                                duration: const Duration(milliseconds: 160),
+                                opacity: pulse.show ? 1.0 : 0.0,
+                                child: FadeTransition(
+                                  opacity: _pulseOpacity,
+                                  child: Container(
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 14,
+                                      vertical: 8,
+                                    ),
+                                    decoration: BoxDecoration(
+                                      color: _headerDark.withOpacity(0.95),
+                                      borderRadius: BorderRadius.circular(20),
+                                      border: Border.all(
+                                        color: _neonGreen.withOpacity(0.85),
+                                      ),
+                                    ),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Text(
+                                          pulse.labelAr,
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 12.5,
+                                            fontWeight: FontWeight.w700,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 2),
+                                        Text(
+                                          pulse.labelEn,
+                                          textAlign: TextAlign.center,
+                                          textDirection: TextDirection.ltr,
+                                          style: const TextStyle(
+                                            color: _mintButton,
+                                            fontSize: 10.5,
+                                            fontWeight: FontWeight.w500,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+
+                          // بطاقة السؤال الغامض + الأزرار العريضة (عربي أساسي + إنجليزي)
+                          if (showCard)
+                            Positioned(
+                              left: 18,
+                              right: 18,
+                              bottom: 22,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    activeCard.questionAr,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 16.5,
+                                      fontWeight: FontWeight.w800,
+                                      height: 1.35,
+                                      shadows: [
+                                        Shadow(
+                                          color: Colors.black,
+                                          blurRadius: 12,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    activeCard.questionEn,
+                                    textAlign: TextAlign.center,
+                                    textDirection: TextDirection.ltr,
+                                    style: TextStyle(
+                                      color: Colors.white.withOpacity(0.82),
+                                      fontSize: 12,
+                                      fontWeight: FontWeight.w500,
+                                      height: 1.3,
+                                      shadows: const [
+                                        Shadow(
+                                          color: Colors.black,
+                                          blurRadius: 10,
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                  const SizedBox(height: 14),
+                                  ...activeCard.options.map((opt) {
+                                    return Padding(
+                                      padding: const EdgeInsets.only(bottom: 10),
+                                      child: SizedBox(
+                                        width: double.infinity,
+ 
