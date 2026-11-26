@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:flutter/material.dart';
 import 'package:video_player/video_player.dart';
+import 'day_four_interaction_overlay.dart';
 import 'story_transition_placeholder.dart';
 
 const dayFourVideoPaths = [
@@ -30,26 +31,6 @@ const dayFourVideoDurations = [
   Duration(milliseconds: 33739),
 ];
 
-List<String> dayFourInteractiveExperiencePaths(int collapseIndex) {
-  if (collapseIndex < 0 || collapseIndex >= dayFourSharedStoryStartIndex) {
-    throw ArgumentError.value(collapseIndex, 'collapseIndex');
-  }
-  return [
-    dayFourVideoPaths[collapseIndex],
-    ...dayFourVideoPaths.skip(dayFourSharedStoryStartIndex),
-  ];
-}
-
-List<Duration> dayFourInteractiveExperienceDurations(int collapseIndex) {
-  if (collapseIndex < 0 || collapseIndex >= dayFourSharedStoryStartIndex) {
-    throw ArgumentError.value(collapseIndex, 'collapseIndex');
-  }
-  return [
-    dayFourVideoDurations[collapseIndex],
-    ...dayFourVideoDurations.skip(dayFourSharedStoryStartIndex),
-  ];
-}
-
 int? dayFourNextVideoIndex(int currentIndex, {int? corridorCollapseIndex}) {
   if (currentIndex == dayFourVideoPaths.length - 1) return null;
   if (corridorCollapseIndex != null) {
@@ -76,6 +57,8 @@ class _DayFourVideoBackgroundState extends State<DayFourVideoBackground> {
   bool _transitioning = false;
   bool _failed = false;
   String? _failureMessage;
+  Duration _elapsedBeforeCurrentVideo = Duration.zero;
+  final ValueNotifier<Duration> _storyPosition = ValueNotifier(Duration.zero);
 
   @override
   void initState() {
@@ -83,7 +66,24 @@ class _DayFourVideoBackgroundState extends State<DayFourVideoBackground> {
     unawaited(_playVideo(widget.corridorCollapseIndex ?? 0));
   }
 
-  Future<void> _playVideo(int index) async {
+  List<int> get _experienceVideoIndices => [
+    widget.corridorCollapseIndex ?? 0,
+    ...List.generate(
+      dayFourVideoPaths.length - dayFourSharedStoryStartIndex,
+      (offset) => dayFourSharedStoryStartIndex + offset,
+    ),
+  ];
+
+  Duration get _experienceDuration => _experienceVideoIndices.fold(
+    Duration.zero,
+    (total, index) => total + dayFourVideoDurations[index],
+  );
+
+  Future<void> _playVideo(
+    int index, {
+    Duration position = Duration.zero,
+    Duration elapsedBefore = Duration.zero,
+  }) async {
     final activation = ++_activation;
     _transitioning = true;
     final nextController = VideoPlayerController.asset(
@@ -100,11 +100,14 @@ class _DayFourVideoBackgroundState extends State<DayFourVideoBackground> {
 
       await nextController.setLooping(false);
       await nextController.setVolume(1);
+      if (position > Duration.zero) await nextController.seekTo(position);
       nextController.addListener(_checkProgress);
 
       final previousController = _controller;
       _controller = nextController;
       _currentIndex = index;
+      _elapsedBeforeCurrentVideo = elapsedBefore;
+      _storyPosition.value = elapsedBefore + position;
       _transitioning = false;
       _failed = false;
       _failureMessage = null;
@@ -142,6 +145,10 @@ class _DayFourVideoBackgroundState extends State<DayFourVideoBackground> {
     if (controller == null || !controller.value.isInitialized) return;
 
     final value = controller.value;
+    final storyPosition = _elapsedBeforeCurrentVideo + value.position;
+    if (_storyPosition.value != storyPosition) {
+      _storyPosition.value = storyPosition;
+    }
     if (value.hasError) {
       _transitioning = true;
       _failed = true;
@@ -156,8 +163,41 @@ class _DayFourVideoBackgroundState extends State<DayFourVideoBackground> {
       );
       if (nextIndex == null) return;
       _transitioning = true;
-      unawaited(_playVideo(nextIndex));
+      unawaited(
+        _playVideo(
+          nextIndex,
+          elapsedBefore: _elapsedBeforeCurrentVideo + value.duration,
+        ),
+      );
     }
+  }
+
+  Future<void> _seekToStoryPosition(Duration target) async {
+    var elapsed = Duration.zero;
+    for (final index in _experienceVideoIndices) {
+      final duration = dayFourVideoDurations[index];
+      if (target < elapsed + duration ||
+          index == dayFourVideoPaths.length - 1) {
+        await _playVideo(
+          index,
+          position: target - elapsed,
+          elapsedBefore: elapsed,
+        );
+        return;
+      }
+      elapsed += duration;
+    }
+  }
+
+  Future<void> _togglePlayback() async {
+    final controller = _controller;
+    if (controller == null || !controller.value.isInitialized) return;
+    if (controller.value.isPlaying) {
+      await controller.pause();
+    } else {
+      await controller.play();
+    }
+    if (mounted) setState(() {});
   }
 
   Future<void> _disposeController(VideoPlayerController? controller) async {
@@ -170,6 +210,7 @@ class _DayFourVideoBackgroundState extends State<DayFourVideoBackground> {
   void dispose() {
     _activation++;
     unawaited(_disposeController(_controller));
+    _storyPosition.dispose();
     super.dispose();
   }
 
@@ -203,20 +244,32 @@ class _DayFourVideoBackgroundState extends State<DayFourVideoBackground> {
     return ColoredBox(
       key: const ValueKey('day-four-video-background'),
       color: Colors.black,
-      child: AnimatedSwitcher(
-        duration: const Duration(milliseconds: 350),
-        switchInCurve: Curves.easeInOutCubic,
-        switchOutCurve: Curves.easeInOutCubic,
-        layoutBuilder: (currentChild, previousChildren) => Stack(
-          fit: StackFit.expand,
-          children: [...previousChildren, ?currentChild],
-        ),
-        transitionBuilder: (child, animation) =>
-            FadeTransition(opacity: animation, child: child),
-        child: KeyedSubtree(
-          key: ValueKey<Object>(videoKey),
-          child: videoContent,
-        ),
+      child: Stack(
+        fit: StackFit.expand,
+        children: [
+          AnimatedSwitcher(
+            duration: const Duration(milliseconds: 350),
+            switchInCurve: Curves.easeInOutCubic,
+            switchOutCurve: Curves.easeInOutCubic,
+            layoutBuilder: (currentChild, previousChildren) => Stack(
+              fit: StackFit.expand,
+              children: [...previousChildren, ?currentChild],
+            ),
+            transitionBuilder: (child, animation) =>
+                FadeTransition(opacity: animation, child: child),
+            child: KeyedSubtree(
+              key: ValueKey<Object>(videoKey),
+              child: videoContent,
+            ),
+          ),
+          DayFourInteractionOverlay(
+            position: _storyPosition,
+            totalDuration: _experienceDuration,
+            isPlaying: controller?.value.isPlaying ?? false,
+            onTogglePlayback: _togglePlayback,
+            onSeek: _seekToStoryPosition,
+          ),
+        ],
       ),
     );
   }

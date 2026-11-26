@@ -37,29 +37,6 @@ void main() {
     ]);
   });
 
-  test(
-    'Day 4 interactive experience covers every corridor collapse to end',
-    () {
-      for (var collapseIndex = 0; collapseIndex < 4; collapseIndex++) {
-        expect(dayFourInteractiveExperiencePaths(collapseIndex), [
-          dayFourVideoPaths[collapseIndex],
-          ...dayFourVideoPaths.skip(dayFourSharedStoryStartIndex),
-        ]);
-        expect(dayFourInteractiveExperienceDurations(collapseIndex), [
-          dayFourVideoDurations[collapseIndex],
-          ...dayFourVideoDurations.skip(dayFourSharedStoryStartIndex),
-        ]);
-      }
-
-      expect(
-        dayFourInteractiveExperienceDurations(
-          3,
-        ).fold(Duration.zero, (total, duration) => total + duration),
-        const Duration(milliseconds: 122948),
-      );
-    },
-  );
-
   test('each Day 3 corridor reaches its matching Day 4 collapse', () {
     expect(dayThreeCorridorCollapseIndices, {
       dayThreeMirrorEndingPhase: 3,

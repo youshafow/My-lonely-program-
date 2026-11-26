@@ -14,7 +14,6 @@ import 'day1_animations.dart';
 import 'day2.dart';
 import 'day3.dart';
 import 'day4.dart';
-import 'interactive_shadow_scene_screen.dart';
 import 'story_interaction_overlay.dart';
 
 const _geminiApiKey = String.fromEnvironment('GEMINI_API_KEY');
@@ -746,14 +745,6 @@ class _ShadowChatScreenState extends State<ShadowChatScreen>
   Widget build(BuildContext context) {
     if (_ending != null) return _buildEndingScreen(context);
     if (!_doorOpened) return _buildDoorScreen(context);
-    if (currentStage == 4) {
-      return InteractiveShadowSceneScreen(
-        assetPaths: dayFourInteractiveExperiencePaths(_dayFourCollapseIndex),
-        assetDurations: dayFourInteractiveExperienceDurations(
-          _dayFourCollapseIndex,
-        ),
-      );
-    }
     return _buildJourneyScreen(context);
   }
 
@@ -1162,6 +1153,10 @@ class _ShadowChatScreenState extends State<ShadowChatScreen>
                         onPhaseChanged: _onDayThreePhaseChanged,
                         onInteractionChanged: _onDayThreeInteractionChanged,
                         onComplete: _onDayThreeVideoComplete,
+                      )
+                    : currentStage == 4
+                    ? DayFourVideoBackground(
+                        corridorCollapseIndex: _dayFourCollapseIndex,
                       )
                     : DayOneAnimationOverlay(
                         imagePath: _getStageImagePath(),
