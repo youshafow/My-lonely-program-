@@ -139,6 +139,28 @@ void main() {
       findsOneWidget,
     );
 
+    position.value = const Duration(seconds: 20);
+    await tester.pump();
+    expect(
+      tester
+          .widget<AnimatedOpacity>(
+            find.byKey(const ValueKey('day-four-collapse-alert')),
+          )
+          .opacity,
+      1,
+    );
+
+    position.value = const Duration(seconds: 21);
+    await tester.pump();
+    expect(
+      tester
+          .widget<AnimatedOpacity>(
+            find.byKey(const ValueKey('day-four-collapse-alert')),
+          )
+          .opacity,
+      0,
+    );
+
     position.value = const Duration(seconds: 23);
     await tester.pump();
     expect(seekTarget, const Duration(seconds: 22));

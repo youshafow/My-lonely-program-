@@ -84,13 +84,13 @@ class _DayFourInteractionOverlayState extends State<DayFourInteractionOverlay>
     if (sec == 17) {
       return (visible: true, text: 'انهيار 1/4 • ممرات لم تزرها بعد');
     }
-    if (sec >= 18 && sec <= 19) {
+    if (sec == 18) {
       return (visible: true, text: 'انهيار 2/4 • ممرات لم تزرها بعد');
     }
-    if (sec >= 20 && sec <= 21) {
+    if (sec == 19) {
       return (visible: true, text: 'انهيار 3/4 • ممرات لم تزرها بعد');
     }
-    if (sec >= 22 && sec <= 23) {
+    if (sec == 20) {
       return (visible: true, text: 'انهيار 4/4 • ممرات لم تزرها بعد');
     }
     return (visible: false, text: '');
@@ -336,6 +336,7 @@ class _DayFourInteractionOverlayState extends State<DayFourInteractionOverlay>
                 child: IgnorePointer(
                   ignoring: !pulseState.visible,
                   child: AnimatedOpacity(
+                    key: const ValueKey('day-four-collapse-alert'),
                     duration: const Duration(milliseconds: 180),
                     opacity: pulseState.visible ? 1.0 : 0.0,
                     child: FadeTransition(
