@@ -81,7 +81,7 @@ void main() {
         dayFourVideoDurations
             .skip(dayFourSharedStoryStartIndex)
             .fold(Duration.zero, (total, duration) => total + duration);
-    final position = ValueNotifier(const Duration(seconds: 8));
+    final position = ValueNotifier(const Duration(milliseconds: 8500));
     Duration? seekTarget;
     addTearDown(position.dispose);
 
@@ -109,21 +109,22 @@ void main() {
       ),
       findsOneWidget,
     );
-    expect(
-      tester.getCenter(find.byKey(const ValueKey('day-four-interaction-card'))),
-      const Offset(400, 300),
+    final interactionCardCenter = tester.getCenter(
+      find.byKey(const ValueKey('day-four-interaction-card')),
     );
+    expect(interactionCardCenter.dx, 400);
+    expect(interactionCardCenter.dy, closeTo(300, 4));
 
-    position.value = const Duration(seconds: 10);
+    position.value = const Duration(milliseconds: 10500);
     await tester.pump();
-    expect(seekTarget, const Duration(seconds: 9));
+    expect(seekTarget, const Duration(milliseconds: 9500));
 
-    position.value = const Duration(seconds: 9);
+    position.value = const Duration(milliseconds: 9500);
     await tester.pump();
     await tester.tap(find.text('مواجهة ما ظهر خلف المرآة ورفض الاستسلام'));
     await tester.pump();
 
-    position.value = const Duration(seconds: 17);
+    position.value = const Duration(milliseconds: 16539);
     await tester.pump();
 
     expect(find.text('انهيار 1/4 • ممرات لم تزرها بعد'), findsOneWidget);
@@ -150,7 +151,7 @@ void main() {
       1,
     );
 
-    position.value = const Duration(seconds: 21);
+    position.value = const Duration(milliseconds: 20500);
     await tester.pump();
     expect(
       tester
@@ -170,23 +171,23 @@ void main() {
     await tester.tap(find.text('الاستمرار في ممر المرآة رغم الانهيارات'));
     await tester.pump();
 
-    position.value = const Duration(seconds: 41);
+    position.value = const Duration(milliseconds: 41750);
     await tester.pump();
     expect(
       find.text('التقط أنفاسك... هناك ممرات لم تزرها بعد'),
       findsOneWidget,
     );
 
-    position.value = const Duration(seconds: 52);
+    position.value = const Duration(milliseconds: 50682);
     await tester.pump();
     expect(
       find.text('الظل يقترب من الضوء... كيف ستواجه اللحظة؟'),
       findsOneWidget,
     );
-    position.value = const Duration(seconds: 59);
+    position.value = const Duration(milliseconds: 59182);
     await tester.pump();
-    expect(seekTarget, const Duration(seconds: 58));
-    position.value = const Duration(seconds: 58);
+    expect(seekTarget, const Duration(milliseconds: 58182));
+    position.value = const Duration(milliseconds: 58182);
     await tester.pump();
     await tester.tap(find.text('مدّ يدك نحو النور'));
     await tester.pump();

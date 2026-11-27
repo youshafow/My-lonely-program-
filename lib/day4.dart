@@ -178,11 +178,20 @@ class _DayFourVideoBackgroundState extends State<DayFourVideoBackground> {
       final duration = dayFourVideoDurations[index];
       if (target < elapsed + duration ||
           index == dayFourVideoPaths.length - 1) {
-        await _playVideo(
-          index,
-          position: target - elapsed,
-          elapsedBefore: elapsed,
-        );
+        final position = target - elapsed;
+        final controller = _controller;
+        if (index == _currentIndex &&
+            controller != null &&
+            controller.value.isInitialized) {
+          _elapsedBeforeCurrentVideo = elapsed;
+          await controller.seekTo(position);
+          if (!mounted) return;
+          _storyPosition.value = elapsed + position;
+          if (!controller.value.isPlaying) await controller.play();
+          return;
+        }
+
+        await _playVideo(index, position: position, elapsedBefore: elapsed);
         return;
       }
       elapsed += duration;

@@ -1,3 +1,5 @@
+import 'dart:ui' show ImageFilter;
+
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 
@@ -45,7 +47,9 @@ class _DayFourInteractionOverlayState extends State<DayFourInteractionOverlay>
   static const Color _neonGreen = Color(0xFF00FF66);
 
   late final AnimationController _pulseController;
+  late final AnimationController _floatController;
   late final Animation<double> _pulseOpacity;
+  late final Animation<double> _floatOffset;
 
   String? _lastFeedbackToast;
   String? _loopingChoiceWindow;
@@ -54,10 +58,10 @@ class _DayFourInteractionOverlayState extends State<DayFourInteractionOverlay>
 
   // 4 تدميرات أخيرة في سلسلة الانهيارات قبل لحظة الجلوس
   static const List<String> _finalFourDestructionKeys = [
-    'final_destruction_1', // ~00:17
-    'final_destruction_2', // ~00:18 - 00:19
-    'final_destruction_3', // ~00:20 - 00:21
-    'final_destruction_4', // ~00:22 - 00:23
+    'final_destruction_1', // ~00:16.5 - 00:17.5
+    'final_destruction_2', // ~00:17.5 - 00:18.5
+    'final_destruction_3', // ~00:18.5 - 00:19.5
+    'final_destruction_4', // ~00:19.5 - 00:20.5
   ];
 
   @override
@@ -67,43 +71,60 @@ class _DayFourInteractionOverlayState extends State<DayFourInteractionOverlay>
       vsync: this,
       duration: const Duration(milliseconds: 620),
     )..repeat(reverse: true);
+    _floatController = AnimationController(
+      vsync: this,
+      duration: const Duration(milliseconds: 2200),
+    )..repeat(reverse: true);
 
     _pulseOpacity = Tween<double>(begin: 0.25, end: 1.0).animate(
       CurvedAnimation(parent: _pulseController, curve: Curves.easeInOut),
+    );
+    _floatOffset = Tween<double>(begin: -3, end: 3).animate(
+      CurvedAnimation(parent: _floatController, curve: Curves.easeInOut),
     );
   }
 
   @override
   void dispose() {
     _pulseController.dispose();
+    _floatController.dispose();
     super.dispose();
   }
 
   /// شريط التنبيه النابض (بينور ويطفي) مقتصر على الـ 4 تدميرات الأخيرة فقط
-  ({bool visible, String text}) _resolveFinalFourDestructionPulse(int sec) {
-    if (sec == 17) {
+  ({bool visible, String text}) _resolveFinalFourDestructionPulse(
+    Duration position,
+  ) {
+    if (position >= const Duration(milliseconds: 16539) &&
+        position < const Duration(milliseconds: 17500)) {
       return (visible: true, text: 'انهيار 1/4 • ممرات لم تزرها بعد');
     }
-    if (sec == 18) {
+    if (position >= const Duration(milliseconds: 17500) &&
+        position < const Duration(milliseconds: 18500)) {
       return (visible: true, text: 'انهيار 2/4 • ممرات لم تزرها بعد');
     }
-    if (sec == 19) {
+    if (position >= const Duration(milliseconds: 18500) &&
+        position < const Duration(milliseconds: 19500)) {
       return (visible: true, text: 'انهيار 3/4 • ممرات لم تزرها بعد');
     }
-    if (sec == 20) {
+    if (position >= const Duration(milliseconds: 19500) &&
+        position < const Duration(milliseconds: 20500)) {
       return (visible: true, text: 'انهيار 4/4 • ممرات لم تزرها بعد');
     }
     return (visible: false, text: '');
   }
 
-  String? _resolveQuietWhisper(int sec) {
-    if (sec >= 13 && sec <= 16) {
+  String? _resolveQuietWhisper(Duration position) {
+    if (position >= const Duration(seconds: 13) &&
+        position < const Duration(seconds: 17)) {
       return 'التقط أنفاسك... هناك ممرات لم تزرها بعد';
     }
-    if (sec >= 41 && sec <= 48) {
+    if (position >= const Duration(milliseconds: 41750) &&
+        position < const Duration(seconds: 49)) {
       return 'التقط أنفاسك... هناك ممرات لم تزرها بعد';
     }
-    if (sec >= 98 && sec <= 107) {
+    if (position >= const Duration(seconds: 98) &&
+        position < const Duration(seconds: 108)) {
       return 'طريق مضاء... وبعض الممرات ما زالت بانتظار عودتك';
     }
     return null;
@@ -115,13 +136,14 @@ class _DayFourInteractionOverlayState extends State<DayFourInteractionOverlay>
     Duration loopAt,
     List<SceneChoiceOption> options,
   })?
-  _resolveActiveChoices(int sec) {
-    if (sec >= 8 && !_dismissedChoiceWindows.contains('win_mirror_8_10')) {
+  _resolveActiveChoices(Duration position) {
+    if (position >= const Duration(milliseconds: 8500) &&
+        !_dismissedChoiceWindows.contains('win_mirror_8_10')) {
       return (
         windowKey: 'win_mirror_8_10',
         question:
             'تحطمت المرآة وظهر ما كان يختبئ خلفك... هل الوحش يطاردك أم يكشف سراً دفيناً؟',
-        loopAt: const Duration(seconds: 10),
+        loopAt: const Duration(milliseconds: 10500),
         options: const [
           SceneChoiceOption(
             id: 'mirror_confront',
@@ -137,7 +159,7 @@ class _DayFourInteractionOverlayState extends State<DayFourInteractionOverlay>
       );
     }
 
-    if (sec >= 17 &&
+    if (position >= const Duration(milliseconds: 16539) &&
         !_dismissedChoiceWindows.contains('win_destructions_17_23')) {
       return (
         windowKey: 'win_destructions_17_23',
@@ -161,11 +183,12 @@ class _DayFourInteractionOverlayState extends State<DayFourInteractionOverlay>
       );
     }
 
-    if (sec >= 52 && !_dismissedChoiceWindows.contains('win_52_59')) {
+    if (position >= const Duration(milliseconds: 50682) &&
+        !_dismissedChoiceWindows.contains('win_52_59')) {
       return (
         windowKey: 'win_52_59',
         question: 'الظل يقترب من الضوء... كيف ستواجه اللحظة؟',
-        loopAt: const Duration(seconds: 59),
+        loopAt: const Duration(milliseconds: 59182),
         options: const [
           SceneChoiceOption(
             id: 'reach_light',
@@ -181,9 +204,8 @@ class _DayFourInteractionOverlayState extends State<DayFourInteractionOverlay>
       );
     }
 
-    final totalSec = widget.totalDuration.inSeconds;
-    if (totalSec > 0 &&
-        sec >= totalSec - 15 &&
+    if (widget.totalDuration > const Duration(seconds: 15) &&
+        position >= widget.totalDuration - const Duration(seconds: 15) &&
         !_dismissedChoiceWindows.contains('win_end')) {
       return (
         windowKey: 'win_end',
@@ -267,10 +289,9 @@ class _DayFourInteractionOverlayState extends State<DayFourInteractionOverlay>
   }
 
   Widget _buildOverlay(BuildContext context, Duration position) {
-    final currentSec = position.inSeconds;
-    final pulseState = _resolveFinalFourDestructionPulse(currentSec);
-    final whisperText = _resolveQuietWhisper(currentSec);
-    final choicePack = _resolveActiveChoices(currentSec);
+    final pulseState = _resolveFinalFourDestructionPulse(position);
+    final whisperText = _resolveQuietWhisper(position);
+    final choicePack = _resolveActiveChoices(position);
     final showChoices =
         choicePack != null &&
         !_dismissedChoiceWindows.contains(choicePack.windowKey);
@@ -462,103 +483,178 @@ class _DayFourInteractionOverlayState extends State<DayFourInteractionOverlay>
                       : Center(
                           child: ConstrainedBox(
                             constraints: const BoxConstraints(maxWidth: 520),
-                            child: Container(
-                              key: const ValueKey('day-four-interaction-card'),
-                              margin: const EdgeInsets.symmetric(
-                                horizontal: 18,
-                              ),
-                              padding: const EdgeInsets.all(14),
-                              decoration: BoxDecoration(
-                                color: _bgDark.withOpacity(0.94),
-                                borderRadius: BorderRadius.circular(18),
-                                border: Border.all(
-                                  color: _neonGreen.withOpacity(0.72),
-                                ),
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.55),
-                                    blurRadius: 18,
-                                    offset: const Offset(0, 5),
+                            child: AnimatedBuilder(
+                              animation: _floatController,
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(22),
+                                child: BackdropFilter(
+                                  filter: ImageFilter.blur(
+                                    sigmaX: 12,
+                                    sigmaY: 12,
                                   ),
-                                ],
-                              ),
-                              child: Column(
-                                mainAxisSize: MainAxisSize.min,
-                                children: [
-                                  Text(
-                                    choicePack.question,
-                                    textAlign: TextAlign.center,
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 14,
-                                      fontWeight: FontWeight.w700,
-                                      height: 1.35,
+                                  child: Container(
+                                    key: const ValueKey(
+                                      'day-four-interaction-card',
                                     ),
-                                  ),
-                                  const SizedBox(height: 10),
-                                  Column(
-                                    crossAxisAlignment:
-                                        CrossAxisAlignment.stretch,
-                                    children: choicePack.options.map((opt) {
-                                      return Padding(
-                                        padding: const EdgeInsets.only(
-                                          bottom: 8,
+                                    margin: const EdgeInsets.symmetric(
+                                      horizontal: 18,
+                                    ),
+                                    padding: const EdgeInsets.all(18),
+                                    decoration: BoxDecoration(
+                                      gradient: LinearGradient(
+                                        begin: Alignment.topLeft,
+                                        end: Alignment.bottomRight,
+                                        colors: [
+                                          const Color(
+                                            0xE61B2922,
+                                          ).withOpacity(0.97),
+                                          const Color(
+                                            0xE6090D0B,
+                                          ).withOpacity(0.96),
+                                        ],
+                                      ),
+                                      border: Border.all(
+                                        color: _neonGreen.withOpacity(0.42),
+                                      ),
+                                      boxShadow: [
+                                        BoxShadow(
+                                          color: _neonGreen.withOpacity(0.12),
+                                          blurRadius: 28,
+                                          spreadRadius: 1,
                                         ),
-                                        child: InkWell(
-                                          borderRadius: BorderRadius.circular(
-                                            22,
-                                          ),
-                                          onTap: () => _handleChoiceSelected(
-                                            choicePack.windowKey,
-                                            opt,
-                                          ),
-                                          child: Container(
-                                            padding: const EdgeInsets.symmetric(
-                                              horizontal: 14,
-                                              vertical: 9,
-                                            ),
-                                            decoration: BoxDecoration(
-                                              color: _cardDark,
-                                              borderRadius:
-                                                  BorderRadius.circular(22),
-                                              border: Border.all(
-                                                color: _neonGreen.withOpacity(
-                                                  0.75,
-                                                ),
+                                        BoxShadow(
+                                          color: Colors.black.withOpacity(0.48),
+                                          blurRadius: 24,
+                                          offset: const Offset(0, 10),
+                                        ),
+                                      ],
+                                    ),
+                                    child: Column(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Row(
+                                          mainAxisAlignment:
+                                              MainAxisAlignment.center,
+                                          children: [
+                                            Icon(
+                                              Icons.auto_awesome,
+                                              size: 15,
+                                              color: _neonGreen.withOpacity(
+                                                0.9,
                                               ),
                                             ),
-                                            child: Row(
-                                              mainAxisAlignment:
-                                                  MainAxisAlignment.center,
-                                              children: [
-                                                if (opt.icon != null) ...[
-                                                  Icon(
-                                                    opt.icon,
-                                                    size: 15,
-                                                    color: _neonGreen,
-                                                  ),
-                                                  const SizedBox(width: 6),
-                                                ],
-                                                Flexible(
-                                                  child: Text(
-                                                    opt.label,
-                                                    textAlign: TextAlign.center,
-                                                    style: const TextStyle(
-                                                      color: Colors.white,
-                                                      fontSize: 12.5,
-                                                      fontWeight:
-                                                          FontWeight.w600,
+                                            const SizedBox(width: 7),
+                                            Text(
+                                              'اختر مسارك',
+                                              style: TextStyle(
+                                                color: _neonGreen.withOpacity(
+                                                  0.9,
+                                                ),
+                                                fontSize: 11,
+                                                fontWeight: FontWeight.w700,
+                                                letterSpacing: 0.4,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        const SizedBox(height: 10),
+                                        Text(
+                                          choicePack.question,
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(
+                                            color: Colors.white,
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.w700,
+                                            height: 1.4,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 14),
+                                        Column(
+                                          crossAxisAlignment:
+                                              CrossAxisAlignment.stretch,
+                                          children: choicePack.options.map((
+                                            opt,
+                                          ) {
+                                            return Padding(
+                                              padding: const EdgeInsets.only(
+                                                bottom: 8,
+                                              ),
+                                              child: Material(
+                                                color: Colors.transparent,
+                                                child: InkWell(
+                                                  borderRadius:
+                                                      BorderRadius.circular(16),
+                                                  onTap: () =>
+                                                      _handleChoiceSelected(
+                                                        choicePack.windowKey,
+                                                        opt,
+                                                      ),
+                                                  child: Ink(
+                                                    padding:
+                                                        const EdgeInsets.symmetric(
+                                                          horizontal: 14,
+                                                          vertical: 11,
+                                                        ),
+                                                    decoration: BoxDecoration(
+                                                      color: _cardDark
+                                                          .withOpacity(0.82),
+                                                      borderRadius:
+                                                          BorderRadius.circular(
+                                                            16,
+                                                          ),
+                                                      border: Border.all(
+                                                        color: _neonGreen
+                                                            .withOpacity(0.32),
+                                                      ),
+                                                    ),
+                                                    child: Row(
+                                                      mainAxisAlignment:
+                                                          MainAxisAlignment
+                                                              .center,
+                                                      children: [
+                                                        if (opt.icon !=
+                                                            null) ...[
+                                                          Icon(
+                                                            opt.icon,
+                                                            size: 17,
+                                                            color: _neonGreen,
+                                                          ),
+                                                          const SizedBox(
+                                                            width: 8,
+                                                          ),
+                                                        ],
+                                                        Flexible(
+                                                          child: Text(
+                                                            opt.label,
+                                                            textAlign: TextAlign
+                                                                .center,
+                                                            style:
+                                                                const TextStyle(
+                                                                  color: Colors
+                                                                      .white,
+                                                                  fontSize: 13,
+                                                                  fontWeight:
+                                                                      FontWeight
+                                                                          .w600,
+                                                                ),
+                                                          ),
+                                                        ),
+                                                      ],
                                                     ),
                                                   ),
                                                 ),
-                                              ],
-                                            ),
-                                          ),
+                                              ),
+                                            );
+                                          }).toList(),
                                         ),
-                                      );
-                                    }).toList(),
+                                      ],
+                                    ),
                                   ),
-                                ],
+                                ),
+                              ),
+                              builder: (context, child) => Transform.translate(
+                                offset: Offset(0, _floatOffset.value),
+                                child: child,
                               ),
                             ),
                           ),
