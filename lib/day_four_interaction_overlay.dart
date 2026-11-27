@@ -48,6 +48,7 @@ class _DayFourInteractionOverlayState extends State<DayFourInteractionOverlay>
   late final Animation<double> _pulseOpacity;
 
   String? _lastFeedbackToast;
+  String? _loopingChoiceWindow;
   final Set<String> _visitedPassages = {};
   final Set<String> _dismissedChoiceWindows = {};
 
@@ -108,12 +109,19 @@ class _DayFourInteractionOverlayState extends State<DayFourInteractionOverlay>
     return null;
   }
 
-  ({String windowKey, List<SceneChoiceOption> options})? _resolveActiveChoices(
-    int sec,
-  ) {
-    if (sec >= 12 && sec <= 21) {
+  ({
+    String windowKey,
+    String question,
+    int loopAtSecond,
+    List<SceneChoiceOption> options,
+  })?
+  _resolveActiveChoices(int sec) {
+    if (sec >= 12 && !_dismissedChoiceWindows.contains('win_mirror_12_21')) {
       return (
         windowKey: 'win_mirror_12_21',
+        question:
+            'تحطمت المرآة وظهر ما كان يختبئ خلفك... هل الوحش يطاردك أم يكشف سراً دفيناً؟',
+        loopAtSecond: 22,
         options: const [
           SceneChoiceOption(
             id: 'mirror_confront',
@@ -129,9 +137,13 @@ class _DayFourInteractionOverlayState extends State<DayFourInteractionOverlay>
       );
     }
 
-    if (sec >= 26 && sec <= 36) {
+    if (sec >= 26 &&
+        !_dismissedChoiceWindows.contains('win_destructions_26_36')) {
       return (
         windowKey: 'win_destructions_26_36',
+        question:
+            'أربعة ممرات لم تزرها بعد تنهار أمامك... ما الذي ينتظرك لو عدت إليها؟',
+        loopAtSecond: 37,
         options: const [
           SceneChoiceOption(
             id: 'mark_explore_next',
@@ -149,9 +161,11 @@ class _DayFourInteractionOverlayState extends State<DayFourInteractionOverlay>
       );
     }
 
-    if (sec >= 52 && sec <= 59) {
+    if (sec >= 52 && !_dismissedChoiceWindows.contains('win_52_59')) {
       return (
         windowKey: 'win_52_59',
+        question: 'الظل يقترب من الضوء... كيف ستواجه اللحظة؟',
+        loopAtSecond: 60,
         options: const [
           SceneChoiceOption(
             id: 'reach_light',
@@ -168,15 +182,21 @@ class _DayFourInteractionOverlayState extends State<DayFourInteractionOverlay>
     }
 
     final totalSec = widget.totalDuration.inSeconds;
-    if (totalSec > 0 && sec >= totalSec - 5) {
+    if (totalSec > 0 &&
+        sec >= totalSec - 15 &&
+        !_dismissedChoiceWindows.contains('win_end')) {
       return (
         windowKey: 'win_end',
+        question:
+            'وصلت إلى هنا... لكن المتاهة ما زالت تخفي ممرات لم تزرها بعد.',
+        loopAtSecond: totalSec,
         options: const [
           SceneChoiceOption(
             id: 'replay_unvisited',
             label: 'جرّب ممراً لم تزره بعد',
             icon: Icons.replay,
-            seekToOnSelect: Duration(seconds: 22),
+            passageKeyToMarkVisited: 'passage_collapse_34',
+            seekToOnSelect: Duration(seconds: 24),
           ),
           SceneChoiceOption(
             id: 'restart_all',
@@ -210,6 +230,35 @@ class _DayFourInteractionOverlayState extends State<DayFourInteractionOverlay>
     });
   }
 
+  void _loopUnansweredChoice(
+    Duration position,
+    ({
+      String windowKey,
+      String question,
+      int loopAtSecond,
+      List<SceneChoiceOption> options,
+    })?
+    choicePack,
+    bool showChoices,
+  ) {
+    if (choicePack == null || !showChoices) {
+      _loopingChoiceWindow = null;
+      return;
+    }
+
+    final loopAt = Duration(seconds: choicePack.loopAtSecond);
+    if (position < loopAt) {
+      if (_loopingChoiceWindow == choicePack.windowKey) {
+        _loopingChoiceWindow = null;
+      }
+      return;
+    }
+    if (_loopingChoiceWindow == choicePack.windowKey) return;
+
+    _loopingChoiceWindow = choicePack.windowKey;
+    widget.onSeek(Duration(seconds: choicePack.loopAtSecond - 1));
+  }
+
   @override
   Widget build(BuildContext context) {
     return ValueListenableBuilder<Duration>(
@@ -226,6 +275,7 @@ class _DayFourInteractionOverlayState extends State<DayFourInteractionOverlay>
     final showChoices =
         choicePack != null &&
         !_dismissedChoiceWindows.contains(choicePack.windowKey);
+    _loopUnansweredChoice(position, choicePack, showChoices);
 
     final unvisitedCount = _finalFourDestructionKeys
         .where((key) => !_visitedPassages.contains(key))
@@ -400,11 +450,8 @@ class _DayFourInteractionOverlayState extends State<DayFourInteractionOverlay>
                 ),
               ),
 
-            // 7. أزرار التفاعل السريع المتدرجة أسفل الشاشة
-            Positioned(
-              bottom: 26,
-              left: 14,
-              right: 14,
+            // 7. بطاقة السؤال والاختيارات في منتصف المشهد
+            Positioned.fill(
               child: IgnorePointer(
                 ignoring: !showChoices,
                 child: AnimatedOpacity(
@@ -412,53 +459,109 @@ class _DayFourInteractionOverlayState extends State<DayFourInteractionOverlay>
                   opacity: showChoices ? 1.0 : 0.0,
                   child: choicePack == null
                       ? const SizedBox.shrink()
-                      : Wrap(
-                          alignment: WrapAlignment.center,
-                          spacing: 10,
-                          runSpacing: 8,
-                          children: choicePack.options.map((opt) {
-                            return InkWell(
-                              borderRadius: BorderRadius.circular(22),
-                              onTap: () => _handleChoiceSelected(
-                                choicePack.windowKey,
-                                opt,
+                      : Center(
+                          child: ConstrainedBox(
+                            constraints: const BoxConstraints(maxWidth: 520),
+                            child: Container(
+                              key: const ValueKey('day-four-interaction-card'),
+                              margin: const EdgeInsets.symmetric(
+                                horizontal: 18,
                               ),
-                              child: Container(
-                                padding: const EdgeInsets.symmetric(
-                                  horizontal: 14,
-                                  vertical: 9,
+                              padding: const EdgeInsets.all(14),
+                              decoration: BoxDecoration(
+                                color: _bgDark.withOpacity(0.94),
+                                borderRadius: BorderRadius.circular(18),
+                                border: Border.all(
+                                  color: _neonGreen.withOpacity(0.72),
                                 ),
-                                decoration: BoxDecoration(
-                                  color: _cardDark.withOpacity(0.92),
-                                  borderRadius: BorderRadius.circular(22),
-                                  border: Border.all(
-                                    color: _neonGreen.withOpacity(0.65),
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.55),
+                                    blurRadius: 18,
+                                    offset: const Offset(0, 5),
                                   ),
-                                ),
-                                child: Row(
-                                  mainAxisSize: MainAxisSize.min,
-                                  children: [
-                                    if (opt.icon != null) ...[
-                                      Icon(
-                                        opt.icon,
-                                        size: 15,
-                                        color: _neonGreen,
-                                      ),
-                                      const SizedBox(width: 6),
-                                    ],
-                                    Text(
-                                      opt.label,
-                                      style: const TextStyle(
-                                        color: Colors.white,
-                                        fontSize: 12.5,
-                                        fontWeight: FontWeight.w600,
-                                      ),
-                                    ),
-                                  ],
-                                ),
+                                ],
                               ),
-                            );
-                          }).toList(),
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Text(
+                                    choicePack.question,
+                                    textAlign: TextAlign.center,
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.w700,
+                                      height: 1.35,
+                                    ),
+                                  ),
+                                  const SizedBox(height: 10),
+                                  Column(
+                                    crossAxisAlignment:
+                                        CrossAxisAlignment.stretch,
+                                    children: choicePack.options.map((opt) {
+                                      return Padding(
+                                        padding: const EdgeInsets.only(
+                                          bottom: 8,
+                                        ),
+                                        child: InkWell(
+                                          borderRadius: BorderRadius.circular(
+                                            22,
+                                          ),
+                                          onTap: () => _handleChoiceSelected(
+                                            choicePack.windowKey,
+                                            opt,
+                                          ),
+                                          child: Container(
+                                            padding: const EdgeInsets.symmetric(
+                                              horizontal: 14,
+                                              vertical: 9,
+                                            ),
+                                            decoration: BoxDecoration(
+                                              color: _cardDark,
+                                              borderRadius:
+                                                  BorderRadius.circular(22),
+                                              border: Border.all(
+                                                color: _neonGreen.withOpacity(
+                                                  0.75,
+                                                ),
+                                              ),
+                                            ),
+                                            child: Row(
+                                              mainAxisAlignment:
+                                                  MainAxisAlignment.center,
+                                              children: [
+                                                if (opt.icon != null) ...[
+                                                  Icon(
+                                                    opt.icon,
+                                                    size: 15,
+                                                    color: _neonGreen,
+                                                  ),
+                                                  const SizedBox(width: 6),
+                                                ],
+                                                Flexible(
+                                                  child: Text(
+                                                    opt.label,
+                                                    textAlign: TextAlign.center,
+                                                    style: const TextStyle(
+                                                      color: Colors.white,
+                                                      fontSize: 12.5,
+                                                      fontWeight:
+                                                          FontWeight.w600,
+                                                    ),
+                                                  ),
+                                                ),
+                                              ],
+                                            ),
+                                          ),
+                                        ),
+                                      );
+                                    }).toList(),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ),
                         ),
                 ),
               ),

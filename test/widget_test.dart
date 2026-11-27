@@ -77,6 +77,7 @@ void main() {
     WidgetTester tester,
   ) async {
     final position = ValueNotifier(const Duration(seconds: 12));
+    Duration? seekTarget;
     addTearDown(position.dispose);
 
     await tester.pumpWidget(
@@ -87,7 +88,7 @@ void main() {
             totalDuration: const Duration(minutes: 3),
             isPlaying: true,
             onTogglePlayback: () {},
-            onSeek: (_) {},
+            onSeek: (target) => seekTarget = target,
           ),
         ),
       ),
@@ -101,6 +102,25 @@ void main() {
       find.text('مواجهة ما ظهر خلف المرآة ورفض الاستسلام'),
       findsOneWidget,
     );
+    expect(
+      find.text(
+        'تحطمت المرآة وظهر ما كان يختبئ خلفك... هل الوحش يطاردك أم يكشف سراً دفيناً؟',
+      ),
+      findsOneWidget,
+    );
+    expect(
+      tester.getCenter(find.byKey(const ValueKey('day-four-interaction-card'))),
+      const Offset(400, 300),
+    );
+
+    position.value = const Duration(seconds: 22);
+    await tester.pump();
+    expect(seekTarget, const Duration(seconds: 21));
+
+    position.value = const Duration(seconds: 21);
+    await tester.pump();
+    await tester.tap(find.text('مواجهة ما ظهر خلف المرآة ورفض الاستسلام'));
+    await tester.pump();
 
     position.value = const Duration(seconds: 26);
     await tester.pump();
@@ -109,10 +129,43 @@ void main() {
       find.text('تثبيت إشارة للعودة واستكشاف الممرات الأربعة'),
       findsOneWidget,
     );
+    expect(find.text('الاستمرار في ممر المرآة رغم الانهيارات'), findsOneWidget);
     expect(
-      find.text('الاستمرار في ممر المرآة رغم الانهيارات'),
+      find.text(
+        'أربعة ممرات لم تزرها بعد تنهار أمامك... ما الذي ينتظرك لو عدت إليها؟',
+      ),
       findsOneWidget,
     );
+
+    position.value = const Duration(seconds: 37);
+    await tester.pump();
+    expect(seekTarget, const Duration(seconds: 36));
+
+    position.value = const Duration(seconds: 36);
+    await tester.pump();
+    await tester.tap(find.text('الاستمرار في ممر المرآة رغم الانهيارات'));
+    await tester.pump();
+
+    position.value = const Duration(seconds: 52);
+    await tester.pump();
+    expect(
+      find.text('الظل يقترب من الضوء... كيف ستواجه اللحظة؟'),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('مدّ يدك نحو النور'));
+    await tester.pump();
+
+    position.value = const Duration(seconds: 170);
+    await tester.pump();
+
+    expect(
+      find.text('وصلت إلى هنا... لكن المتاهة ما زالت تخفي ممرات لم تزرها بعد.'),
+      findsOneWidget,
+    );
+    await tester.tap(find.text('جرّب ممراً لم تزره بعد'));
+    await tester.pump();
+    expect(seekTarget, const Duration(seconds: 24));
+    await tester.pump(const Duration(seconds: 2));
   });
 
   test('story decisions match the visible events in each video', () {
