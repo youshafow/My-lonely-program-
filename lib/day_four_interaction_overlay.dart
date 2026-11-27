@@ -54,10 +54,10 @@ class _DayFourInteractionOverlayState extends State<DayFourInteractionOverlay>
 
   // 4 تدميرات أخيرة في سلسلة الانهيارات قبل لحظة الجلوس
   static const List<String> _finalFourDestructionKeys = [
-    'final_destruction_1', // ~00:22 - 00:24
-    'final_destruction_2', // ~00:25 - 00:27
-    'final_destruction_3', // ~00:30 - 00:32
-    'final_destruction_4', // ~00:34 - 00:37
+    'final_destruction_1', // ~00:17
+    'final_destruction_2', // ~00:18 - 00:19
+    'final_destruction_3', // ~00:20 - 00:21
+    'final_destruction_4', // ~00:22 - 00:23
   ];
 
   @override
@@ -81,26 +81,26 @@ class _DayFourInteractionOverlayState extends State<DayFourInteractionOverlay>
 
   /// شريط التنبيه النابض (بينور ويطفي) مقتصر على الـ 4 تدميرات الأخيرة فقط
   ({bool visible, String text}) _resolveFinalFourDestructionPulse(int sec) {
-    if (sec == 24 || sec == 25) {
+    if (sec == 17) {
       return (visible: true, text: 'انهيار 1/4 • ممرات لم تزرها بعد');
     }
-    if (sec >= 26 && sec <= 29) {
+    if (sec >= 18 && sec <= 19) {
       return (visible: true, text: 'انهيار 2/4 • ممرات لم تزرها بعد');
     }
-    if (sec >= 30 && sec <= 33) {
+    if (sec >= 20 && sec <= 21) {
       return (visible: true, text: 'انهيار 3/4 • ممرات لم تزرها بعد');
     }
-    if (sec >= 34 && sec <= 36) {
+    if (sec >= 22 && sec <= 23) {
       return (visible: true, text: 'انهيار 4/4 • ممرات لم تزرها بعد');
     }
     return (visible: false, text: '');
   }
 
   String? _resolveQuietWhisper(int sec) {
-    if (sec >= 12 && sec <= 21) {
+    if (sec >= 13 && sec <= 16) {
       return 'التقط أنفاسك... هناك ممرات لم تزرها بعد';
     }
-    if (sec >= 38 && sec <= 49) {
+    if (sec >= 41 && sec <= 48) {
       return 'التقط أنفاسك... هناك ممرات لم تزرها بعد';
     }
     if (sec >= 98 && sec <= 107) {
@@ -112,16 +112,16 @@ class _DayFourInteractionOverlayState extends State<DayFourInteractionOverlay>
   ({
     String windowKey,
     String question,
-    int loopAtSecond,
+    Duration loopAt,
     List<SceneChoiceOption> options,
   })?
   _resolveActiveChoices(int sec) {
-    if (sec >= 12 && !_dismissedChoiceWindows.contains('win_mirror_12_21')) {
+    if (sec >= 8 && !_dismissedChoiceWindows.contains('win_mirror_8_10')) {
       return (
-        windowKey: 'win_mirror_12_21',
+        windowKey: 'win_mirror_8_10',
         question:
             'تحطمت المرآة وظهر ما كان يختبئ خلفك... هل الوحش يطاردك أم يكشف سراً دفيناً؟',
-        loopAtSecond: 22,
+        loopAt: const Duration(seconds: 10),
         options: const [
           SceneChoiceOption(
             id: 'mirror_confront',
@@ -137,13 +137,13 @@ class _DayFourInteractionOverlayState extends State<DayFourInteractionOverlay>
       );
     }
 
-    if (sec >= 26 &&
-        !_dismissedChoiceWindows.contains('win_destructions_26_36')) {
+    if (sec >= 17 &&
+        !_dismissedChoiceWindows.contains('win_destructions_17_23')) {
       return (
-        windowKey: 'win_destructions_26_36',
+        windowKey: 'win_destructions_17_23',
         question:
             'أربعة ممرات لم تزرها بعد تنهار أمامك... ما الذي ينتظرك لو عدت إليها؟',
-        loopAtSecond: 37,
+        loopAt: const Duration(seconds: 23),
         options: const [
           SceneChoiceOption(
             id: 'mark_explore_next',
@@ -165,7 +165,7 @@ class _DayFourInteractionOverlayState extends State<DayFourInteractionOverlay>
       return (
         windowKey: 'win_52_59',
         question: 'الظل يقترب من الضوء... كيف ستواجه اللحظة؟',
-        loopAtSecond: 60,
+        loopAt: const Duration(seconds: 59),
         options: const [
           SceneChoiceOption(
             id: 'reach_light',
@@ -189,7 +189,7 @@ class _DayFourInteractionOverlayState extends State<DayFourInteractionOverlay>
         windowKey: 'win_end',
         question:
             'وصلت إلى هنا... لكن المتاهة ما زالت تخفي ممرات لم تزرها بعد.',
-        loopAtSecond: totalSec,
+        loopAt: widget.totalDuration,
         options: const [
           SceneChoiceOption(
             id: 'replay_unvisited',
@@ -235,7 +235,7 @@ class _DayFourInteractionOverlayState extends State<DayFourInteractionOverlay>
     ({
       String windowKey,
       String question,
-      int loopAtSecond,
+      Duration loopAt,
       List<SceneChoiceOption> options,
     })?
     choicePack,
@@ -246,8 +246,7 @@ class _DayFourInteractionOverlayState extends State<DayFourInteractionOverlay>
       return;
     }
 
-    final loopAt = Duration(seconds: choicePack.loopAtSecond);
-    if (position < loopAt) {
+    if (position < choicePack.loopAt) {
       if (_loopingChoiceWindow == choicePack.windowKey) {
         _loopingChoiceWindow = null;
       }
@@ -256,7 +255,7 @@ class _DayFourInteractionOverlayState extends State<DayFourInteractionOverlay>
     if (_loopingChoiceWindow == choicePack.windowKey) return;
 
     _loopingChoiceWindow = choicePack.windowKey;
-    widget.onSeek(Duration(seconds: choicePack.loopAtSecond - 1));
+    widget.onSeek(choicePack.loopAt - const Duration(seconds: 1));
   }
 
   @override

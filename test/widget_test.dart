@@ -76,7 +76,12 @@ void main() {
   testWidgets('Day 4 shared-collapse hint and choices are visible', (
     WidgetTester tester,
   ) async {
-    final position = ValueNotifier(const Duration(seconds: 12));
+    final mirrorRouteDuration =
+        dayFourVideoDurations[3] +
+        dayFourVideoDurations
+            .skip(dayFourSharedStoryStartIndex)
+            .fold(Duration.zero, (total, duration) => total + duration);
+    final position = ValueNotifier(const Duration(seconds: 8));
     Duration? seekTarget;
     addTearDown(position.dispose);
 
@@ -85,7 +90,7 @@ void main() {
         home: Scaffold(
           body: DayFourInteractionOverlay(
             position: position,
-            totalDuration: const Duration(minutes: 3),
+            totalDuration: mirrorRouteDuration,
             isPlaying: true,
             onTogglePlayback: () {},
             onSeek: (target) => seekTarget = target,
@@ -94,10 +99,6 @@ void main() {
       ),
     );
 
-    expect(
-      find.text('التقط أنفاسك... هناك ممرات لم تزرها بعد'),
-      findsOneWidget,
-    );
     expect(
       find.text('مواجهة ما ظهر خلف المرآة ورفض الاستسلام'),
       findsOneWidget,
@@ -113,18 +114,19 @@ void main() {
       const Offset(400, 300),
     );
 
-    position.value = const Duration(seconds: 22);
+    position.value = const Duration(seconds: 10);
     await tester.pump();
-    expect(seekTarget, const Duration(seconds: 21));
+    expect(seekTarget, const Duration(seconds: 9));
 
-    position.value = const Duration(seconds: 21);
+    position.value = const Duration(seconds: 9);
     await tester.pump();
     await tester.tap(find.text('مواجهة ما ظهر خلف المرآة ورفض الاستسلام'));
     await tester.pump();
 
-    position.value = const Duration(seconds: 26);
+    position.value = const Duration(seconds: 17);
     await tester.pump();
 
+    expect(find.text('انهيار 1/4 • ممرات لم تزرها بعد'), findsOneWidget);
     expect(
       find.text('تثبيت إشارة للعودة واستكشاف الممرات الأربعة'),
       findsOneWidget,
@@ -137,14 +139,21 @@ void main() {
       findsOneWidget,
     );
 
-    position.value = const Duration(seconds: 37);
+    position.value = const Duration(seconds: 23);
     await tester.pump();
-    expect(seekTarget, const Duration(seconds: 36));
+    expect(seekTarget, const Duration(seconds: 22));
 
-    position.value = const Duration(seconds: 36);
+    position.value = const Duration(seconds: 22);
     await tester.pump();
     await tester.tap(find.text('الاستمرار في ممر المرآة رغم الانهيارات'));
     await tester.pump();
+
+    position.value = const Duration(seconds: 41);
+    await tester.pump();
+    expect(
+      find.text('التقط أنفاسك... هناك ممرات لم تزرها بعد'),
+      findsOneWidget,
+    );
 
     position.value = const Duration(seconds: 52);
     await tester.pump();
@@ -152,16 +161,24 @@ void main() {
       find.text('الظل يقترب من الضوء... كيف ستواجه اللحظة؟'),
       findsOneWidget,
     );
+    position.value = const Duration(seconds: 59);
+    await tester.pump();
+    expect(seekTarget, const Duration(seconds: 58));
+    position.value = const Duration(seconds: 58);
+    await tester.pump();
     await tester.tap(find.text('مدّ يدك نحو النور'));
     await tester.pump();
 
-    position.value = const Duration(seconds: 170);
+    position.value = mirrorRouteDuration;
     await tester.pump();
 
     expect(
       find.text('وصلت إلى هنا... لكن المتاهة ما زالت تخفي ممرات لم تزرها بعد.'),
       findsOneWidget,
     );
+    expect(seekTarget, mirrorRouteDuration - const Duration(seconds: 1));
+    position.value = mirrorRouteDuration - const Duration(seconds: 1);
+    await tester.pump();
     await tester.tap(find.text('جرّب ممراً لم تزره بعد'));
     await tester.pump();
     expect(seekTarget, const Duration(seconds: 24));
